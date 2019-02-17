@@ -41,11 +41,17 @@ If a `create` goes wrong (`terraform apply`), simply re-run it for the same clus
 
 The pipeline uses a terraform workspace for each cluster name, so you should be safe deploying multiple clusters via the same Jenkins job. Obviously state is maintained in the Jenkins job workspace (see To do below).
 
-[Screenshot of the parameters](jenkins.png).
+![Screenshot of the parameters](jenkins.png).
 
 # Accessing the cluster
 
-You would use `kubectl`, however you need a `~/.kube/config` file configured with the output from `terraform output`. You also need to install the `aws-iam-authenicator` binary/helper (see aws docs above on how to get this). Once you set these up, you can view the cluster, but no worker nodes are deployed yet:
+You would use `kubectl`, however you need a `~/.kube/config` file configured with the output from `terraform output` so you can access. 
+
+Make sure when accessing with `kubectl` that you are using the same credential that Jenkins used to create the cluster!
+
+You also need to install the `aws-iam-authenicator` binary/helper (see aws docs above on how to get this). 
+
+Once you set these up, you can view the cluster, but no worker nodes are deployed yet:
 
 ```
 $ kubectl get all --all-namespaces
