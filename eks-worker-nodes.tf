@@ -24,32 +24,33 @@ resource "aws_iam_role" "node" {
   ]
 }
 POLICY
+
 }
 
 resource "aws_iam_role_policy_attachment" "node-AmazonEKSWorkerNodePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = "${aws_iam_role.node.name}"
+  role       = aws_iam_role.node.name
 }
 
 resource "aws_iam_role_policy_attachment" "node-AmazonEKS_CNI_Policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = "${aws_iam_role.node.name}"
+  role       = aws_iam_role.node.name
 }
 
 resource "aws_iam_role_policy_attachment" "node-AmazonEC2ContainerRegistryReadOnly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = "${aws_iam_role.node.name}"
+  role       = aws_iam_role.node.name
 }
 
 resource "aws_iam_instance_profile" "node" {
   name = "eks-${var.cluster-name}"
-  role = "${aws_iam_role.node.name}"
+  role = aws_iam_role.node.name
 }
 
 resource "aws_security_group" "node" {
   name        = "eks-${var.cluster-name}-node"
   description = "Security group for all nodes in the cluster"
-  vpc_id      = "${aws_vpc.eks.id}"
+  vpc_id      = aws_vpc.eks.id
 
   egress {
     from_port   = 0
@@ -58,20 +59,18 @@ resource "aws_security_group" "node" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = "${
-    map(
-     "Name", "eks-${var.cluster-name}-node",
-     "kubernetes.io/cluster/eks-${var.cluster-name}", "owned",
-    )
-  }"
+  tags = {
+    "Name"                                          = "eks-${var.cluster-name}-node"
+    "kubernetes.io/cluster/eks-${var.cluster-name}" = "owned"
+  }
 }
 
 resource "aws_security_group_rule" "node-ingress-self" {
   description              = "Allow node to communicate with each other"
   from_port                = 0
   protocol                 = "-1"
-  security_group_id        = "${aws_security_group.node.id}"
-  source_security_group_id = "${aws_security_group.node.id}"
+  security_group_id        = aws_security_group.node.id
+  source_security_group_id = aws_security_group.node.id
   to_port                  = 65535
   type                     = "ingress"
 }
@@ -80,8 +79,8 @@ resource "aws_security_group_rule" "node-ingress-cluster" {
   description              = "Allow worker Kubelets and pods to receive communication from the cluster control plane"
   from_port                = 1025
   protocol                 = "tcp"
-  security_group_id        = "${aws_security_group.node.id}"
-  source_security_group_id = "${aws_security_group.cluster.id}"
+  security_group_id        = aws_security_group.node.id
+  source_security_group_id = aws_security_group.cluster.id
   to_port                  = 65535
   type                     = "ingress"
 }
@@ -105,18 +104,19 @@ locals {
   node-userdata = <<USERDATA
 #!/bin/bash
 set -o xtrace
-/etc/eks/bootstrap.sh --apiserver-endpoint '${aws_eks_cluster.eks.endpoint}' --b64-cluster-ca '${aws_eks_cluster.eks.certificate_authority.0.data}' 'eks-${var.cluster-name}'
+/etc/eks/bootstrap.sh --apiserver-endpoint '${aws_eks_cluster.eks.endpoint}' --b64-cluster-ca '${aws_eks_cluster.eks.certificate_authority[0].data}' 'eks-${var.cluster-name}'
 USERDATA
+
 }
 
 resource "aws_launch_configuration" "eks" {
   associate_public_ip_address = true
-  iam_instance_profile        = "${aws_iam_instance_profile.node.name}"
-  image_id                    = "${data.aws_ami.eks-worker.id}"
-  instance_type               = "${var.inst-type}"
+  iam_instance_profile        = aws_iam_instance_profile.node.name
+  image_id                    = data.aws_ami.eks-worker.id
+  instance_type               = var.inst-type
   name_prefix                 = "eks-${var.cluster-name}-"
-  security_groups             = ["${aws_security_group.node.id}"]
-  user_data_base64            = "${base64encode(local.node-userdata)}"
+  security_groups             = [aws_security_group.node.id]
+  user_data_base64            = base64encode(local.node-userdata)
 
   lifecycle {
     create_before_destroy = true
@@ -124,12 +124,12 @@ resource "aws_launch_configuration" "eks" {
 }
 
 resource "aws_autoscaling_group" "eks" {
-  desired_capacity     = "${var.num-workers}"
-  launch_configuration = "${aws_launch_configuration.eks.id}"
-  max_size             = "${var.num-workers}"
+  desired_capacity     = var.num-workers
+  launch_configuration = aws_launch_configuration.eks.id
+  max_size             = var.num-workers
   min_size             = 0
   name                 = "eks-${var.cluster-name}"
-  vpc_zone_identifier  = ["${aws_subnet.eks.*.id}"]
+  vpc_zone_identifier  = aws_subnet.eks.*.id
 
   tag {
     key                 = "Name"
@@ -143,3 +143,4 @@ resource "aws_autoscaling_group" "eks" {
     propagate_at_launch = true
   }
 }
+
