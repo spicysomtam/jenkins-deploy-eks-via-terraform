@@ -133,3 +133,16 @@ This the recommended method, as keeping the stack in the workspace of the Jenkin
 ## Implement locking for terraform state using dynamodb
 
 Similar to state, this ensure multiple runs of terraform cannot happen. See terraform docs for this. Again you might wish to get the dynamodb table name as a Jenkins parameter.
+
+# Updates
+
+## Oct 2020
+
+Things have moved on with EKS since I originally wrote this. Some updates:
+* Add `aws-auth` configmap to the cluster if its not there. Now nodes register properly!
+* Updated default instance type to `m5.large`.
+
+Adding users via the `aws-auth` configmap is described in official EKS docs [here](https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html).
+
+To do:
+* Change the node setups to use Node Groups (even though the existing setup works, it would be nice to see the nodes in the nodegroups tab in the EKS aws console).

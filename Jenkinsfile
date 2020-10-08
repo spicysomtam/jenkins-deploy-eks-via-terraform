@@ -5,7 +5,7 @@ pipeline {
     string(name: 'cluster', defaultValue : 'demo', description: "EKS cluster name;eg demo creates cluster named eks-demo.")
     string(name: 'vpc_network', defaultValue : '10.0', description: "First 2 octets of vpc network; eg 10.0")
     string(name: 'num_subnets', defaultValue : '3', description: "Number of vpc subnets/AZs.")
-    string(name: 'instance_type', defaultValue : 'm4.large', description: "k8s worker node instance type.")
+    string(name: 'instance_type', defaultValue : 'm5.large', description: "k8s worker node instance type.")
     string(name: 'num_workers', defaultValue : '3', description: "k8s number of worker instances.")
     string(name: 'api_ingress_cidrs', defaultValue : '0.0.0.0/0', description: "k8s api ingress cidrs; space delimited list.")
     string(name: 'credential', defaultValue : 'jenkins', description: "Jenkins credential that provides the AWS access key and secret.")
