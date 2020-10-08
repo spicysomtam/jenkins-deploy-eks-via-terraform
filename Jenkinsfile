@@ -39,11 +39,10 @@ pipeline {
       steps {
         script {
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-            credentialsId: params.credential, 
-            accessKeyVariable: 'AWS_ACCESS_KEY_ID',  
-            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-
-            // Format cidrs into a list array
+          credentialsId: params.credential, 
+          accessKeyVariable: 'AWS_ACCESS_KEY_ID',  
+          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+              // Format cidrs into a list array
             def ips = '["' + params.api_ingress_cidrs.replaceAll(/\s+/,'\",\"') + '"]'
 
             sh """
@@ -73,12 +72,14 @@ pipeline {
           input "Create/update Terraform stack eks-${params.cluster} in aws?" 
 
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
-            credentialsId: params.credential, 
-            accessKeyVariable: 'AWS_ACCESS_KEY_ID',  
-            secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+          credentialsId: params.credential, 
+          accessKeyVariable: 'AWS_ACCESS_KEY_ID',  
+          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
             
             sh """
-              terraform apply -input=false -auto-approve \$plan
+              terraform apply -input=false -auto-approve ${plan}
+            """
+            /* 
               aws eks update-kubeconfig --name eks-\$params.cluster --region \$params.region 
 
               # Add configmap aws-auth if its not there:
@@ -86,7 +87,7 @@ pipeline {
                 echo "Adding aws-auth configmap to ns kube-system..."
                 terraform output config_map_aws_auth | awk '!/^$/' | kubectl apply -f -
               }
-            """
+            */
           }
         }
       }
