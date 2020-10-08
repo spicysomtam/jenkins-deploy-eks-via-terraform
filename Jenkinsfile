@@ -77,12 +77,10 @@ pipeline {
             accessKeyVariable: 'AWS_ACCESS_KEY_ID',  
             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
             
-            echo "Region is ${params.region} for cluster eks-${params.cluster}."
-
-/* 
             sh """
               terraform apply -input=false -auto-approve ${plan}
-              aws eks update-kubeconfig --name eks-${params.cluster} --region ${params.region} 
+              aws eks update-kubeconfig --name eks-${params.cluster} \
+                --region ${params.region} 
 
               # Add configmap aws-auth if its not there:
               [ "\$(kubectl -n kube-system get cm aws-auth 2> /dev/null)" ] && {
@@ -90,7 +88,6 @@ pipeline {
                 terraform output config_map_aws_auth | awk '!/^$/' | kubectl apply -f -
               }
             """
-*/
           }
         }
       }
