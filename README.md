@@ -45,83 +45,18 @@ The pipeline uses a terraform workspace for each cluster name, so you should be 
 
 # Accessing the cluster
 
-You would use `kubectl`, however you need a `~/.kube/config` file configured with the output from `terraform output` so you can access. 
+Ensure your awscli is up to date as the newer way to access the cluster is via the `aws` cli rather than the `aws-iam-authenticator`, which you used to need to download and install in your path somewhere. 
 
-Make sure when accessing with `kubectl` that you are using the same credential that Jenkins used to create the cluster!
+You would use `kubectl` to access the cluster (install latest or >= v1.17 at the time of this update). 
 
-You also need to install the `aws-iam-authenicator` binary/helper (see aws docs above on how to get this). 
-
-Once you set these up, you can view the cluster, but no worker nodes are deployed yet:
+You also need a KUBECONFIG. Using the AWS credentials used by Jenkins to create the cluster (otherwise known as cluster creator access), enter the following to generate a KUBECONFIG:
 
 ```
-$ kubectl get all --all-namespaces
-NAMESPACE     NAME                           READY     STATUS    RESTARTS   AGE
-kube-system   pod/coredns-7554568866-5sz7m   0/1       Pending   0          10m
-kube-system   pod/coredns-7554568866-zgw5l   0/1       Pending   0          10m
-
-NAMESPACE     NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)         AGE
-default       service/kubernetes   ClusterIP   172.20.0.1    <none>        443/TCP         10m
-kube-system   service/kube-dns     ClusterIP   172.20.0.10   <none>        53/UDP,53/TCP   10m
-
-NAMESPACE     NAME                        DESIRED   CURRENT   READY     UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
-kube-system   daemonset.apps/aws-node     0         0         0         0            0           <none>          10m
-kube-system   daemonset.apps/kube-proxy   0         0         0         0            0           <none>          10m
-
-NAMESPACE     NAME                      DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-kube-system   deployment.apps/coredns   2         2         2            0           10m
-
-NAMESPACE     NAME                                 DESIRED   CURRENT   READY     AGE
-kube-system   replicaset.apps/coredns-7554568866   2         2         0         10m
-
-$ kubectl get nodes
-No resources found.
+$ aws eks update-kubeconfig --name eks-demo --region eu-west-1
 ```
 
-# Adding worker nodes to the cluster
+Once you can access the cluster via `kubectl get all -A`, you can add access for other aws users; see official EKS docs [here](https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html). 
 
-As per the aws docs [here](https://docs.aws.amazon.com/eks/latest/userguide/launch-workers.html), you need to load the Config map into k8s, so the worker nodes can register themselves in the cluster. Again the `terraform output` provides this, so save the relevant part to say `aws-auth-cm.yamml`. Then load it into the cluster something like this, and wait for worker nodes to become ready (I have only one in this example):
-
-```
-$ kubectl apply -f aws-auth-cm.yaml
-configmap "aws-auth" created
-
-$ kubectl get nodes --watch
-NAME                                       STATUS     ROLES     AGE       VERSION
-No resources found.
-ip-10-1-2-132.eu-west-1.compute.internal   NotReady   <none>    7s        v1.11.5
-ip-10-1-2-132.eu-west-1.compute.internal   NotReady   <none>    10s       v1.11.5
-ip-10-1-2-132.eu-west-1.compute.internal   NotReady   <none>    20s       v1.11.5
-ip-10-1-2-132.eu-west-1.compute.internal   Ready     <none>    30s       v1.11.5
-ip-10-1-2-132.eu-west-1.compute.internal   Ready     <none>    40s       v1.11.5
-
-$ kubectl get all --all-namespaces
-NAMESPACE     NAME                           READY     STATUS    RESTARTS   AGE
-kube-system   pod/aws-node-sf76n             1/1       Running   0          15m
-kube-system   pod/coredns-7554568866-5sz7m   1/1       Running   0          26m
-kube-system   pod/coredns-7554568866-zgw5l   1/1       Running   0          26m
-kube-system   pod/kube-proxy-fmp4j           1/1       Running   0          15m
-
-NAMESPACE     NAME                 TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)         AGE
-default       service/kubernetes   ClusterIP   172.20.0.1    <none>        443/TCP         26m
-kube-system   service/kube-dns     ClusterIP   172.20.0.10   <none>        53/UDP,53/TCP   26m
-
-NAMESPACE     NAME                        DESIRED   CURRENT   READY     UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
-kube-system   daemonset.apps/aws-node     1         1         1         1            1           <none>          26m
-kube-system   daemonset.apps/kube-proxy   1         1         1         1            1           <none>          26m
-
-NAMESPACE     NAME                      DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
-kube-system   deployment.apps/coredns   2         2         2            2           26m
-
-NAMESPACE     NAME                                 DESIRED   CURRENT   READY     AGE
-kube-system   replicaset.apps/coredns-7554568866   2         2         2         26m
-
-$ kubectl get po --all-namespaces --output=wide
-NAMESPACE     NAME                       READY     STATUS    RESTARTS   AGE       IP           NODE
-kube-system   aws-node-sf76n             1/1       Running   0          16m       10.1.2.132   ip-10-1-2-132.eu-west-1.compute.internal
-kube-system   coredns-7554568866-5sz7m   1/1       Running   0          27m       10.1.2.152   ip-10-1-2-132.eu-west-1.compute.internal
-kube-system   coredns-7554568866-zgw5l   1/1       Running   0          27m       10.1.2.244   ip-10-1-2-132.eu-west-1.compute.internal
-kube-system   kube-proxy-fmp4j           1/1       Running   0          16m       10.1.2.132   ip-10-1-2-132.eu-west-1.compute.internal
-```
 # To do
 
 I tried to keep it simple as its a proof of concept/example. It probably needs these enhancements:
@@ -139,7 +74,7 @@ Similar to state, this ensure multiple runs of terraform cannot happen. See terr
 ## Oct 2020
 
 Things have moved on with EKS since I originally wrote this. Some updates:
-* Add `aws-auth` configmap to the cluster if its not there. Now nodes register properly!
+* Add `aws-auth` configmap to the cluster if its not there. Now nodes register automatically!
 * Updated default instance type to `m5.large`.
 
 Adding users via the `aws-auth` configmap is described in official EKS docs [here](https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html).
