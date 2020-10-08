@@ -79,7 +79,7 @@ pipeline {
             
             sh """
               terraform apply -input=false -auto-approve ${plan}
-              aws eks update-kubeconfig --name eks-${params.cluster} --region \$params.region 
+              aws eks update-kubeconfig --name eks-\$params.cluster --region \$params.region 
 
               # Add configmap aws-auth if its not there:
               [ "\$(kubectl -n kube-system get cm aws-auth 2> /dev/null)" ] && {
