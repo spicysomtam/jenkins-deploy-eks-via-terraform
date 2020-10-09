@@ -56,11 +56,3 @@ variable "num-workers" {
   default = "1"
   type    = string
 }
-
-# Allowing access from everything is probably not secure; so please override this to your requirement.
-variable "api-ingress-ips" {
-  description = "External ips allowed access to k8s api."
-  default     = ["0.0.0.0/0"]
-  type        = list(string)
-}
-

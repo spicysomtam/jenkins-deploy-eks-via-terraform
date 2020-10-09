@@ -19,7 +19,6 @@ Some changes to the aws provider example:
   + vpc-subnets: number of subnets/az's (default 3).
   + inst-type: Type of instance to deploy as the worker nodes (default `m4.large`).
   + num-workers: Number of workers to deploy (default `3`).
-  + api-ingress-ips: list of cidrs to allow access from to the k8s cluster. More on this below. The default is insecure so we suggest you improve this (default `0.0.0.0/0`).
 * The cluster name has been changed from `terraform-eks-demo` to `eks-<your-name>`; this means multiple eks instances can be deployed, using different names, from the same Jenkins pipeline. There does not seem any point in including `terraform` (or even `tf`) in the naming; how its deployed is irrevelant IMHO.
 * The security group providing access to the k8s api has been adapted to allow you to pass cidr addresses to it, so you can customise how it can be accessed. The provider example got your public ip from `http://ipv4.icanhazip.com/`; you are welcome to continue using this!
 
@@ -53,7 +52,7 @@ I am just going to discuss those required with kubernetes 1.17 EKS.
 
 Required roles:
 * Cluster service role: this is associated with the cluster (and its creation). This allow the Kubernetes control plane to manage AWS resources on behalf of the cluster. The policy `AmazonEKSClusterPolicy` has all the required permissions, so best use that (unless you require a custom setup). The service `eks.amazonaws.com` needs to be able to assume this role (trust relationship). We also attach policy `AmazonEKSVPCResourceController` to the role, to allow security groups for pods (a new eks 1.17 feature; see [this](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html) for details).
-* Node worker or specifically node group role: This allows worker nodes to be created for the cluster via an auto scaling group (ASG). The more modern node group replaces the older methof of having to create all the resources manually in AWS (ASG, launch configuration, etc). There are three policies that are typically used (interestingly these have not changed since node groups were introduced):
+* Node worker or specifically node group role: This allows worker nodes to be created for the cluster via an auto scaling group (ASG). The more modern node group replaces the older method of having to create all the resources manually in AWS (ASG, launch configuration, etc). There are three policies that are typically used (interestingly these have not changed since node groups were introduced):
   * AmazonEKSWorkerNodePolicy
   * AmazonEKS_CNI_Policy
   * AmazonEC2ContainerRegistryReadOnly

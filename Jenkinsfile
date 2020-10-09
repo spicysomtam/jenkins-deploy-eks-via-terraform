@@ -7,7 +7,6 @@ pipeline {
     string(name: 'num_subnets', defaultValue : '3', description: "Number of vpc subnets/AZs.")
     string(name: 'instance_type', defaultValue : 'm5.large', description: "k8s worker node instance type.")
     string(name: 'num_workers', defaultValue : '3', description: "k8s number of worker instances.")
-    string(name: 'api_ingress_cidrs', defaultValue : '0.0.0.0/0', description: "k8s api ingress cidrs; space delimited list.")
     string(name: 'credential', defaultValue : 'jenkins', description: "Jenkins credential that provides the AWS access key and secret.")
     string(name: 'region', defaultValue : 'eu-west-1', description: "AWS region.")
   }
@@ -55,7 +54,6 @@ pipeline {
                 -var vpc-subnets=${params.num_subnets} \
                 -var inst-type=${params.instance_type} \
                 -var num-workers=${params.num_workers} \
-                -var 'api-ingress-ips=${ips}' \
                 -out ${plan}
             """
           }
