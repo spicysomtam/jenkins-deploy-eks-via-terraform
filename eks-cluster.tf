@@ -1,7 +1,6 @@
 #
 # EKS Cluster Resources
 #  * IAM Role to allow EKS service to manage other AWS services
-#  * EC2 Security Group to allow networking traffic with EKS cluster
 #  * EKS Cluster
 #
 
@@ -30,10 +29,12 @@ resource "aws_iam_role_policy_attachment" "cluster-AmazonEKSClusterPolicy" {
   role       = aws_iam_role.cluster.name
 }
 
-resource "aws_iam_role_policy_attachment" "cluster-AmazonEKSServicePolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
-  role       = aws_iam_role.cluster.name
-}
+# This no longer required after 16 Apr 2020; see this: https://docs.aws.amazon.com/eks/latest/userguide/service_IAM_role.html
+# I leave it inplace incase you need it. Just uncomment it.
+#resource "aws_iam_role_policy_attachment" "cluster-AmazonEKSServicePolicy" {
+#  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSServicePolicy"
+#  role       = aws_iam_role.cluster.name
+#}
 
 resource "aws_security_group" "cluster" {
   name        = "eks-${var.cluster-name}-cluster"
@@ -50,16 +51,6 @@ resource "aws_security_group" "cluster" {
   tags = {
     Name = "eks-${var.cluster-name}"
   }
-}
-
-resource "aws_security_group_rule" "cluster-ingress-node-https" {
-  description              = "Allow pods to communicate with the cluster API Server"
-  from_port                = 443
-  protocol                 = "tcp"
-  security_group_id        = aws_security_group.cluster.id
-  source_security_group_id = aws_security_group.node.id
-  to_port                  = 443
-  type                     = "ingress"
 }
 
 resource "aws_security_group_rule" "cluster-api-ingress-https" {
@@ -83,7 +74,7 @@ resource "aws_eks_cluster" "eks" {
 
   depends_on = [
     aws_iam_role_policy_attachment.cluster-AmazonEKSClusterPolicy,
-    aws_iam_role_policy_attachment.cluster-AmazonEKSServicePolicy,
+#    aws_iam_role_policy_attachment.cluster-AmazonEKSServicePolicy,
   ]
 }
 

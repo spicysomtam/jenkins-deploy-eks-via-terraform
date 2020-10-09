@@ -31,9 +31,23 @@ variable "vpc-subnets" {
 
 variable "inst-type" {
   description = "EKS worker instance type."
-  default     = "m4.large"
+  default     = "m5.large"
   type        = string
 }
+
+# I bumped this up as 20Gb is way to small for all those docker images that will be pulled.
+variable "inst_disk_size" {
+  description = "EKS worker instance disk size in Gb."
+  default     = "60"
+  type        = string
+}
+
+variable "inst_key_pair" {
+  description = "EKS worker instance ssh key pair."
+  default     = "spicysomtam-aws4"
+  type        = string
+}
+
 
 variable "num-workers" {
   description = "Number of eks worker instances to deploy."

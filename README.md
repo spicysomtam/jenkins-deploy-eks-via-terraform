@@ -43,6 +43,23 @@ The pipeline uses a terraform workspace for each cluster name, so you should be 
 
 ![Screenshot of the parameters](jenkins.png).
 
+# IAM roles required
+
+Several roles are required, which is confusing. Thus decided to document these in simple terms.
+
+Since EKS manages the kubernetes backplane and infrastructure, there are no masters in EKS. When you enter `kubectl get nodes` you will just see the worker nodes that are either implemented via autoscaling groups (old method) or via node groups (new in EKS 1.14). With other kubernetes platforms, this command will also show Master nodes. Note that as well as using node groups, you can now use fargate, which also shows up as worker nodes via the `kubectl get nodes` command.
+
+I am just going to discuss those required with kubernetes 1.17 EKS. 
+
+Required roles:
+* Cluster service role: this is associated with the cluster (and its creation). This allow the Kubernetes control plane to manage AWS resources on behalf of the cluster. The policy `AmazonEKSClusterPolicy` has all the required permissions, so best use that (unless you require a custom setup). The service `eks.amazonaws.com` needs to be able to assume this role (trust relationship). We also attach policy `AmazonEKSVPCResourceController` to the role, to allow security groups for pods (a new eks 1.17 feature; see [this](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html) for details).
+* Node worker or specifically node group role: This allows worker nodes to be created for the cluster via an auto scaling group (ASG). The more modern node group replaces the older methof of having to create all the resources manually in AWS (ASG, launch configuration, etc). There are three policies that are typically used (interestingly these have not changed since node groups were introduced):
+  * AmazonEKSWorkerNodePolicy
+  * AmazonEKS_CNI_Policy
+  * AmazonEC2ContainerRegistryReadOnly
+
+It appears the `aws-auth` configmap being inplace allows nodes to be added to the cluster automatically.
+
 # Accessing the cluster
 
 Ensure your awscli is up to date as the newer way to access the cluster is via the `aws` cli rather than the `aws-iam-authenticator`, which you used to need to download and install in your path somewhere. 
@@ -56,6 +73,10 @@ $ aws eks update-kubeconfig --name eks-demo --region eu-west-1
 ```
 
 Once you can access the cluster via `kubectl get all -A`, you can add access for other aws users; see official EKS docs [here](https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html). 
+
+# Kubernetes api and worker nodes are on the public internet
+
+Just something to be aware of. My view on this is its not very secure, even though all traffic is encypted using TLS and ports are limited. Ideally these should only be accessible on the vpc, and then you need to get access to the vpc via a bastion host or vpn. However this example is intended to be a simple example you can spin up, and maybe enhance to fit your needs.
 
 # To do
 
@@ -76,8 +97,6 @@ Similar to state, this ensure multiple runs of terraform cannot happen. See terr
 Things have moved on with EKS since I originally wrote this. Some updates:
 * Add `aws-auth` configmap to the cluster if its not there. Now nodes register automatically!
 * Updated default instance type to `m5.large`.
+* Changed the node setups to use Node Groups (even though the existing setup works, it would be nice to see the nodes in the nodegroups tab in the EKS aws console).
 
 Adding users via the `aws-auth` configmap is described in official EKS docs [here](https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html).
-
-To do:
-* Change the node setups to use Node Groups (even though the existing setup works, it would be nice to see the nodes in the nodegroups tab in the EKS aws console).
