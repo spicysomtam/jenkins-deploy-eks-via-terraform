@@ -42,7 +42,6 @@ pipeline {
           accessKeyVariable: 'AWS_ACCESS_KEY_ID',  
           secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
               // Format cidrs into a list array
-            def ips = '["' + params.api_ingress_cidrs.replaceAll(/\s+/,'\",\"') + '"]'
 
             sh """
               terraform init
