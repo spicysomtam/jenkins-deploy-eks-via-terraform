@@ -81,6 +81,24 @@ pipeline {
             
             sh """
               terraform apply -input=false -auto-approve ${plan}
+            """
+          }
+        }
+      }
+    }
+
+    stage('Cluster setup') {
+      when {
+        expression { params.action == 'create' }
+      }
+      steps {
+        script {
+          withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
+          credentialsId: params.credential, 
+          accessKeyVariable: 'AWS_ACCESS_KEY_ID',  
+          secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+            
+            sh """
               aws eks update-kubeconfig --name eks-${params.cluster} --region ${params.region}
 
               # Add configmap aws-auth if its not there:
