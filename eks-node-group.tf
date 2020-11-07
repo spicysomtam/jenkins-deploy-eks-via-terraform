@@ -22,6 +22,34 @@ POLICY
 
 }
 
+resource "aws_iam_policy" "node_ca" {
+  count      = var.ca ? 1 : 0
+  name        = "eks-${var.cluster-name}-ca"
+  path        = "/"
+  description = "EKS Cluster Autoscalar policy"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "autoscaling:DescribeAutoScalingGroups",
+        "autoscaling:DescribeAutoScalingInstances",
+        "autoscaling:DescribeLaunchConfigurations",
+        "autoscaling:DescribeTags",
+        "autoscaling:SetDesiredCapacity",
+        "autoscaling:TerminateInstanceInAutoScalingGroup",
+        "ec2:DescribeLaunchTemplateVersions"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+EOF
+}
+
 resource "aws_iam_role_policy_attachment" "node-AmazonEKSWorkerNodePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
   role       = aws_iam_role.node.name
@@ -36,6 +64,19 @@ resource "aws_iam_role_policy_attachment" "node-AmazonEC2ContainerRegistryReadOn
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
   role       = aws_iam_role.node.name
 }
+
+resource "aws_iam_role_policy_attachment" "CloudWatchAgentServerPolicy" {
+  count      = var.cloudwatch ? 1 : 0
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+  role       = aws_iam_role.node.name
+}
+
+resource "aws_iam_role_policy_attachment" "node_ca" {
+  count      = var.ca ? 1 : 0
+  policy_arn = aws_iam_policy.node_ca[0].arn
+  role       = aws_iam_role.node.name
+}
+
 
 resource "aws_eks_node_group" "node" {
   cluster_name    = aws_eks_cluster.eks.name

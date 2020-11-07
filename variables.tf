@@ -13,6 +13,13 @@ variable "cluster-name" {
   type        = string
 }
 
+variable "k8s_version" {
+  description = "Kubernetes version."
+  default     = "1.17"
+  type        = string
+}
+
+
 # Assumption; vpc is n.n.h.h/16; eg first 2 octets.
 # Subnets for vpc's use tf counts and will increment the 3rd octet and set the subnet to /24 (eg n.n.0.h/24)
 # See also vpc_subnets
@@ -48,11 +55,22 @@ variable "inst_key_pair" {
   type        = string
 }
 
-
 variable "num-workers" {
   description = "Number of eks worker instances to deploy."
 
   #  default = "3"
   default = "1"
   type    = string
+}
+
+variable "cloudwatch" {
+  type    = bool 
+  default = true
+  description = "Install Cloudwatch logging, metrics and Container Insights."
+}
+
+variable "ca" {
+  type    = bool 
+  default = false
+  description = "Install k8s Cluster Autoscaler."
 }
