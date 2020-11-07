@@ -154,7 +154,7 @@ pipeline {
                 kubectl -n kube-system get deployment.apps/cluster-autoscaler -o yaml | \\
                   sed 's/YOUR CLUSTER NAME/eks-${params.cluster}/g' | \\
                   kubectl apply -f -
-                kubectl -n kube-system set image deployment.apps/cluster-autoscaler cluster-autoscaler=${gregion}.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v${paramas.k8s_version}.${tag}
+                kubectl -n kube-system set image deployment.apps/cluster-autoscaler cluster-autoscaler=${gregion}.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v${params.k8s_version}.${tag}
               """
             }
 
