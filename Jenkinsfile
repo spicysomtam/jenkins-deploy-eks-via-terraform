@@ -114,9 +114,9 @@ pipeline {
             if (params.cloudwatch == true) {
               echo "Setting up Cloudwatch logging and metrics."
               sh """
-                curl https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluentd-quickstart.yaml \\
-                  | sed "s/{{cluster_name}}/eks-${params.cluster}/;s/{{region_name}}/${params.region}/" \\
-                  | kubectl apply -f -
+                curl https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluentd-quickstart.yaml | \\
+                  sed "s/{{cluster_name}}/eks-${params.cluster}/;s/{{region_name}}/${params.region}/" | \\
+                  kubectl apply -f -
               """
             }
 
@@ -151,8 +151,10 @@ pipeline {
               sh """
                 kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
                 kubectl -n kube-system annotate deployment.apps/cluster-autoscaler cluster-autoscaler.kubernetes.io/safe-to-evict="false"
-                kubectl -n kube-system get deployment.apps/cluster-autoscaler -o yaml | \\
-                  sed 's/YOUR CLUSTER NAME/eks-${params.cluster}/g' | \\
+                kubectl -n kube-system get deployment.apps/cluster-autoscaler -o json | \\
+                  jq | \\
+                  sed 's/<YOUR CLUSTER NAME>/eks-${params.cluster}/g' | \\
+                  jq '.spec.template.spec.containers[0].command += ["--balance-similar-node-groups","--skip-nodes-with-system-pods=false"]' | \\
                   kubectl apply -f -
                 kubectl -n kube-system set image deployment.apps/cluster-autoscaler cluster-autoscaler=${gregion}.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v${params.k8s_version}.${tag}
               """
