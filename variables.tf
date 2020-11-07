@@ -57,9 +57,7 @@ variable "inst_key_pair" {
 
 variable "num-workers" {
   description = "Number of eks worker instances to deploy."
-
-  #  default = "3"
-  default = "1"
+  default = "3"
   type    = string
 }
 

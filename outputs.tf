@@ -56,7 +56,9 @@ output "config_map_aws_auth" {
   value = local.config_map_aws_auth
 }
 
-output "kubeconfig" {
-  value = local.kubeconfig
-}
+# Commented this out as we now have `aws eks update-kubeconfig` to get the kubeconfig and its a security risk having this in the Jenkins logging.
+# Uncomment this if you want it.
+#output "kubeconfig" {
+#  value = local.kubeconfig
+#}
 

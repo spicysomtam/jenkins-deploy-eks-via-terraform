@@ -130,6 +130,7 @@ pipeline {
                 gregion='eu'
               }
 
+              // CA image tag, which is k8s major version plus CA minor version.
               // See for latest versions: https://github.com/kubernetes/autoscaler/releases
               switch (params.k8s_version) {
                 case '1.18':
@@ -146,6 +147,7 @@ pipeline {
               	  break;
               }
 
+              // Setup documented here: https://docs.aws.amazon.com/eks/latest/userguide/cluster-autoscaler.html
               sh """
                 kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
                 kubectl -n kube-system annotate deployment.apps/cluster-autoscaler cluster-autoscaler.kubernetes.io/safe-to-evict="false"
