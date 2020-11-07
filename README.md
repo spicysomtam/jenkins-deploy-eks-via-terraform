@@ -24,7 +24,10 @@ Some changes to the aws provider example:
 
 # Jenkins pipeline
 
-You should just need to add the `terraform` binary to somewhere where Jenkins can find it (`/usr/local/bin`).
+Jenkins needs the following linux commands, which can either be installed via the Linux package manager or in the case of `terraform`, downloaded: 
+* terraform (0.12.x)
+* jq
+* kubectl
 
 You will need some aws credentials adding to Jenkins to allow terraform to access your aws account and deploy the stack.
 
@@ -58,6 +61,45 @@ Required roles:
   * AmazonEC2ContainerRegistryReadOnly
 
 It appears the `aws-auth` configmap being inplace allows nodes to be added to the cluster automatically.
+
+# Kubernetes version can be specified
+
+I recently added this. You can choose all the versions offered in the AWS console.
+
+Note that while v1.18 is available for eks, v1.17 is still the default, probably because the k8s Cluster Autoscaler is not available yet for v1.18.
+
+# Automatic setting up of CloudWatch logging, metrics and Container Insights
+
+EKS allows all k8s logging to be sent to CloudWatch logs, which is really useful for investigating issues. In addition, CloudWatch metrics are also gathered from EKS clusters, and these are fed into the recently released Container Insights, which allows you to see graphs on performance, etc. These are not setup automatically in EKS and thus I added this as an option, with the default being enabled (why would you not want this?).
+
+# Kubernetes Cluster Autoscaler install
+
+I added this as an option (default not enabled). What is it? The kubernetes [Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler) (CA) allows k8s to scale worker nodes up and down, dependant on load. Since EKS implements worker nodes via node groups and the autoscaling groups (ASG), a deployment within the cluster monitors pod load, and scales up nodes via the ASG when pods are not scheduled (not enough resources available to run them), and scales nodes down again when they are not used (typically after 10 minutes of idle).
+
+Note that there is a max_workers Jenkins parameter; ensure this is large enough as this is the limit that CA can scale to!
+
+Also be aware that the minimum number of nodes will be the same as the desired (num_workers Jenkins parameter). Originally I set the minimum to 1 but the CA will scale down to this with no load which I don't think is a good idea; thus I set the minimum to be the same as desired. You don't want low fault tolerance (one worker) or your cluster to be starved of resources. At a minimum you should have 3 workers, if only to spread them across 3 availability zones, provide some decent capacity and ability to handle some load without waiting for CA to scale more nodes.
+
+Note that you should also consider the Horizontal Pod Autoscaler, which will scale pods up/down based on cpu load (it requires `metrics-server` to aquire metrics to determine load).
+
+## Testing the Cluster Autoscaler
+
+The easiest way to do this is deploy a cluster with a limited number of worker nodes, and then overload them with pods. A simple way to do this is deploy a helm3 chart, and then scale up the number of replicas (pods). 
+
+I found that based on a `m5.large` instance type, using a `nginx` deployment, I could deploy 30 pods per worker. Lets run through this:
+
+```
+$ kubectl get nodes # We only have one node
+NAME                                      STATUS     ROLES    AGE   VERSION
+ip-10-0-1-74.eu-west-1.compute.internal   Ready      <none>   46m   v1.17.11-eks-cfdc40
+
+$ kubectl -n kube-system logs -f deployment.apps/cluster-autoscaler # we can check ca logging
+$ helm create foobah # This creates a local chart based on nginx
+$ helm upgrade --install fb0 foobah/ --set replicaCount=30 # 1 node overloaded
+$ helm upgrade --install fb0 foobah/ --set replicaCount=60 # 2 nodes overloaded
+$ kubeclt get pos -A # Do we have any pending pods?
+$ kubectl get nodes # See if we are sclaing up; could check the AWS EC2 Console?
+```
 
 # Accessing the cluster
 

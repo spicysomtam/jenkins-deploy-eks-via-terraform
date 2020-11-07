@@ -61,6 +61,12 @@ variable "num-workers" {
   type    = string
 }
 
+variable "max-workers" {
+  description = "Max number of eks worker instances that can be scaled."
+  default = "10"
+  type    = string
+}
+
 variable "cloudwatch" {
   type    = bool 
   default = true

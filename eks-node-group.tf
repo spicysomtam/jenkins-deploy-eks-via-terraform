@@ -88,8 +88,8 @@ resource "aws_eks_node_group" "node" {
 
   scaling_config {
     desired_size = var.num-workers
-    max_size     = var.num-workers
-    min_size     = 1
+    max_size     = var.max-workers
+    min_size     = var.num-workers
   }
 
   remote_access {

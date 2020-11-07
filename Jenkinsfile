@@ -8,6 +8,7 @@ pipeline {
     string(name: 'num_subnets', defaultValue : '3', description: "Number of vpc subnets/AZs.")
     string(name: 'instance_type', defaultValue : 'm5.large', description: "k8s worker node instance type.")
     string(name: 'num_workers', defaultValue : '3', description: "k8s number of worker instances.")
+    string(name: 'max_workers', defaultValue : '10', description: "k8s maximum number of worker instances that can be scaled.")
     string(name: 'credential', defaultValue : 'jenkins', description: "Jenkins credential that provides the AWS access key and secret.")
     booleanParam(name: 'cloudwatch', defaultValue : true, description: "Setup Cloudwatch logging, metrics and Container Insights?")
     booleanParam(name: 'ca', defaultValue : false, description: "Setup k8s Cluster Autoscaler?")
@@ -56,6 +57,7 @@ pipeline {
                 -var vpc-subnets=${params.num_subnets} \
                 -var inst-type=${params.instance_type} \
                 -var num-workers=${params.num_workers} \
+                -var max-workers=${params.max_workers} \
                 -var cloudwatch=${params.cloudwatch} \
                 -var ca=${params.ca} \
                 -var k8s_version=${params.k8s_version} \
