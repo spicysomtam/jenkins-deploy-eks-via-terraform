@@ -86,10 +86,10 @@ Note that you should also consider the Horizontal Pod Autoscaler, which will sca
 
 The easiest way to do this is deploy a cluster with a limited number of worker nodes, and then overload them with pods. A simple way to do this is deploy a helm3 chart, and then scale up the number of replicas (pods). 
 
-I found that based on a `m5.large` instance type, using a `nginx` deployment, I could deploy 30 pods per worker. Lets run through this:
+I found that based on a `m5.large` instance type, using a `nginx` deployment, I could deploy approx 30 pods per worker. Lets run through this:
 
 ```
-$ kubectl get nodes # We only have one node
+$ kubectl get nodes # We only have one node as I deliberatly set the cluster up like this
 NAME                                      STATUS     ROLES    AGE   VERSION
 ip-10-0-1-74.eu-west-1.compute.internal   Ready      <none>   46m   v1.17.11-eks-cfdc40
 
@@ -100,6 +100,12 @@ $ helm upgrade --install fb0 foobah/ --set replicaCount=60 # 2 nodes overloaded
 $ kubeclt get pos -A # Do we have any pending pods?
 $ kubectl get nodes # See if we are sclaing up; could check the AWS EC2 Console?
 ```
+
+## Working round the delay in spinning up another worker
+
+You might ask how can be get round the delay in scaling up another worker? Pods have a priority. You could create a deployment with pods of a lower priority than your default (0); lets call these placeholder pods. Then k8s will kill these placeholder pods and replace them with your regular pods when needed. So you could autoprovision a single node full of these placeholder pods. Your placeholder pods will then become pending after being killed and CA will then spin up another worker for them; since these placeholder pods arn't doing anything useful we don't mind the delay. This is just an idea; I probably need to google a solution where this has been implemented, and provide a link to it (I am sure someone has written something for this).
+
+Another solution: use fargate. I will get round to trying this out. Fargate implements virtual kubelet (the agent on worker nodes); however I am not sure how clever it is in terms providing an infinit resource!
 
 # Accessing the cluster
 
