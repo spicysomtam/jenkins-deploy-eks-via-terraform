@@ -2,6 +2,12 @@
 
 Deploy AWS EKS via a Jenkins job using terraform. The idea here is to easily deploy EKS to AWS, specifying some settings via pipeline parameters.
 
+Why not use `eksctl`? This repo predates `eksctl` and AWS support for it. I might create an `eksctl` based deployment as it saves alot of development effort compared to `terraform`. Tis the nature of technology: nothing stays the same and something better may come along! A good devops practice: use whatever is easiest! If I was to do this again I would probably use `eksctl`.
+
+EC2 instances are used as EKS workers via a node group.
+
+Fargate is not supported in this repo. I test Fargate and its really slow to spin up a pod (~ 60s) and its not very elegant; a Fargate worker node is deployed for each pod since Fargate uses some of virtual machine. See [this issue](https://github.com/aws/containers-roadmap/issues/649) for a discussion on EKS Fargate slowness. At the time of writing this Fargate is not a realistic option (although it may get better in time). My recommendation: stick with EC2 worker nodes.
+
 This is based on the [eks-getting-started](https://github.com/terraform-providers/terraform-provider-aws/tree/master/examples/eks-getting-started) example in the terraform-provider-aws github repo.
 
 Terraform docs are [here](https://www.terraform.io/docs/providers/aws/guides/eks-getting-started.html).
@@ -136,14 +142,3 @@ This the recommended method, as keeping the stack in the workspace of the Jenkin
 ## Implement locking for terraform state using dynamodb
 
 Similar to state, this ensure multiple runs of terraform cannot happen. See terraform docs for this. Again you might wish to get the dynamodb table name as a Jenkins parameter.
-
-# Updates
-
-## Oct 2020
-
-Things have moved on with EKS since I originally wrote this. Some updates:
-* Add `aws-auth` configmap to the cluster if its not there. Now nodes register automatically!
-* Updated default instance type to `m5.large`.
-* Changed the node setups to use Node Groups (even though the existing setup works, it would be nice to see the nodes in the nodegroups tab in the EKS aws console).
-
-Adding users via the `aws-auth` configmap is described in official EKS docs [here](https://docs.aws.amazon.com/eks/latest/userguide/add-user-role.html).
