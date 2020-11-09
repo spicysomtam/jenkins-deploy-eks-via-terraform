@@ -6,7 +6,7 @@ Why not use `eksctl`? This repo predates `eksctl` and AWS support for it. I migh
 
 EC2 instances are used as EKS workers via a node group.
 
-Fargate is not supported in this repo. I test Fargate and its really slow to spin up a pod (~ 60s) and its not very elegant; a Fargate worker node is deployed for each pod since Fargate uses some of virtual machine. See [this issue](https://github.com/aws/containers-roadmap/issues/649) for a discussion on EKS Fargate slowness. At the time of writing this Fargate is not a realistic option (although it may get better in time). My recommendation: stick with EC2 worker nodes.
+Fargate is not supported in this repo. I test Fargate and its really slow to spin up a pod (~ 60s) and its not very elegant; a Fargate worker node is deployed for each pod since Fargate uses VMs. See [this issue](https://github.com/aws/containers-roadmap/issues/649) for a discussion on EKS Fargate slowness. At the time of writing Fargate is not a realistic option (although it may get better in time). My recommendation: stick with EC2 worker nodes.
 
 This is based on the [eks-getting-started](https://github.com/terraform-providers/terraform-provider-aws/tree/master/examples/eks-getting-started) example in the terraform-provider-aws github repo.
 
@@ -111,7 +111,7 @@ $ kubectl get nodes # See if we are sclaing up; could check the AWS EC2 Console?
 
 You might ask how can be get round the delay in scaling up another worker? Pods have a priority. You could create a deployment with pods of a lower priority than your default (0); lets call these placeholder pods. Then k8s will kill these placeholder pods and replace them with your regular pods when needed. So you could autoprovision a single node full of these placeholder pods. Your placeholder pods will then become pending after being killed and CA will then spin up another worker for them; since these placeholder pods arn't doing anything useful we don't mind the delay. This is just an idea; I probably need to google a solution where this has been implemented, and provide a link to it (I am sure someone has written something for this).
 
-Another solution: use fargate. I will get round to trying this out. Fargate implements virtual kubelet (the agent on worker nodes); however I am not sure how clever it is in terms providing an infinit resource!
+Another solution: use fargate. However this is not a realistic solution (see my notes above).
 
 # Accessing the cluster
 
