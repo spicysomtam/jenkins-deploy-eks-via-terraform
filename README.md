@@ -2,11 +2,34 @@
 
 Deploy AWS EKS via a Jenkins job using terraform. The idea here is to easily deploy EKS to AWS, specifying some settings via pipeline parameters.
 
+## Why not use eksctl?
+
 Why not use `eksctl`? This repo predates `eksctl` and AWS support for it. I might create an `eksctl` based deployment as it saves alot of development effort compared to `terraform`. Tis the nature of technology: nothing stays the same and something better may come along! A good devops practice: use whatever is easiest! If I was to do this again I would probably use `eksctl`.
 
-EC2 instances are used as EKS workers via a node group.
+## Use of EC2 instances via node groups
+
+EC2 instances are used as EKS workers via a node group. An autoscaling group is defined so the number of EC2 instances can be scaled up and down.
+
+## Fargate
 
 Fargate is not supported in this repo. I test Fargate and its really slow to spin up a pod (~ 60s) and its not very elegant; a Fargate worker node is deployed for each pod since Fargate uses VMs. See [this issue](https://github.com/aws/containers-roadmap/issues/649) for a discussion on EKS Fargate slowness. At the time of writing Fargate is not a realistic option (although it may get better in time). My recommendation: stick with EC2 worker nodes.
+
+## EKS has very low max pods per node
+
+This was a surprise to me. Max pods per node is the maximum pods a worker node can accomodate. We get a max of 29 pods on a `m5.large` instance type (2 vcpu 8Gb)! Traditionally this was based on cpu and memory resources available on a node, but there are other limits such the cidr range, the container network driver, and the node configuration (node allocatable which can limit pods, memory, cpu, etc). 
+
+The default for Google Kubernetes Enginer (GKE) is 110 pods on a fairly small node (e2-medium 2 vcpu 4Gb). On Rancher k3s, which is a light weight but fully functional k8s distribution, on an AWS `t3a.medium` instance (2 vcpu 4Gb) I can get 100 pods per node with good performance across 2 masters and 2 workers, giving 400 pods on a fairly minimal setup. My test pods were using the default `helm` chart helm3 creates for you (see [Testing the cluster autoscaler](#testing-the-cluster-autoscaler)); this creates a fairly light nginx deployment which is great for creating lots of pods. 
+
+You can see my deployment for k3s clusters [here](https://github.com/spicysomtam/k3s-aws-cluster); I have done alot of work on testing k3s and its pretty solid and scaleable, and its backed by Rancher Labs, a commercial k8s vendor. The Rancher GUI makes setting up logging and monitoring a breeze.
+
+So the pods per node for EKS is limited by the Container Network Interface (CNI) driver used by AWS for VPCs and the cidr range. There is a list [here](https://github.com/awslabs/amazon-eks-ami/blob/master/files/eni-max-pods.txt). From this list we can see its 29 for a `m5.large` instance, which is very small. This would be fine if your pods uses alot of resources, but the idea behind k8s and containerisation in general is to have lots of light weight, fast to deploy/scale, pods. Thus it could turn out quite expensive to run a EKS cluster. There are a couple of guides you can find via a Google to replace the AWS CNI on EKS, which would allow you to increase the pods per node.
+
+I also observe the pod startup and creation is much faster on k3s and gke than eks, and might attribute that to the CNI allocation of the IP for the pod. 
+
+Of all the cloud native kubernetes services, IMHO GCP is the best; not only are the clusters fast to deploy, many things such as ingress have been made easy to setup, and there are lots of guides for doing common tasks within the gcp console. Google Cloud also has a command line tool and api interface.
+
+## Resources
+
 
 This is based on the [eks-getting-started](https://github.com/terraform-providers/terraform-provider-aws/tree/master/examples/eks-getting-started) example in the terraform-provider-aws github repo.
 
