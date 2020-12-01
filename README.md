@@ -101,6 +101,13 @@ Note that while v1.18 is available for eks, v1.17 is still the default, probably
 
 EKS allows all k8s logging to be sent to CloudWatch logs, which is really useful for investigating issues. In addition, CloudWatch metrics are also gathered from EKS clusters, and these are fed into the recently released Container Insights, which allows you to see graphs on performance, etc. These are not setup automatically in EKS and thus I added this as an option, with the default being enabled (why would you not want this?).
 
+# Automatic setup on nginx ingress and a load balancer
+
+The idea here is to set nginx ingress and then just use a single Layer4/TCP style load balancer for all inbound traffic. This is in preference to creating a load balancer for each service, which may create multiple load balancers and incurr additional cost and complexity  for the cluster. 
+
+In essence you create a DNS cname record for each service, which points to the load balancer. On ingress the nginx ingress determines the DNS name requested and then directs traffic to the correct service. You can Google nginx ingress to discover more about it. Note this setup also supports TLS HTTPS ingress (see TLS in kubernetes documentation on ingress controllers).
+
+This is set by default, otherwise the EKS cluster has no ingress (just a load balancer for the k8s API). Its a good default if you are not sure what you want and anyway nginx ingress is the way to go with current k8s .
 # Kubernetes Cluster Autoscaler install
 
 I added this as an option (default not enabled). What is it? The kubernetes [Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler) (CA) allows k8s to scale worker nodes up and down, dependant on load. Since EKS implements worker nodes via node groups and the autoscaling groups (ASG), a deployment within the cluster monitors pod load, and scales up nodes via the ASG when pods are not scheduled (not enough resources available to run them), and scales nodes down again when they are not used (typically after 10 minutes of idle).

@@ -11,6 +11,7 @@ pipeline {
     string(name: 'max_workers', defaultValue : '10', description: "k8s maximum number of worker instances that can be scaled.")
     string(name: 'credential', defaultValue : 'jenkins', description: "Jenkins credential that provides the AWS access key and secret.")
     booleanParam(name: 'cloudwatch', defaultValue : true, description: "Setup Cloudwatch logging, metrics and Container Insights?")
+    booleanParam(name: 'nginx_ingress', defaultValue : true, description: "Setup nginx ingress and load balancer?")
     booleanParam(name: 'ca', defaultValue : false, description: "Setup k8s Cluster Autoscaler?")
     string(name: 'region', defaultValue : 'eu-west-1', description: "AWS region.")
   }
@@ -159,6 +160,26 @@ pipeline {
                   jq '.spec.template.spec.containers[0].command += ["--balance-similar-node-groups","--skip-nodes-with-system-pods=false"]' | \\
                   kubectl apply -f -
                 kubectl -n kube-system set image deployment.apps/cluster-autoscaler cluster-autoscaler=${gregion}.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v${params.k8s_version}.${tag}
+              """
+            }
+
+            // See: https://aws.amazon.com/premiumsupport/knowledge-center/eks-access-kubernetes-services/
+            if (params.nginx_ingress == true) {
+              echo "Setting up nginx ingress and load balancer."
+              sh """
+                git clone https://github.com/nginxinc/kubernetes-ingress.git
+                cd kubernetes-ingress/deployments/
+                ../../kubectl apply -f common/ns-and-sa.yaml
+                ../../kubectl apply -f common/default-server-secret.yaml
+                ../../kubectl apply -f common/nginx-config.yaml
+                ../../kubectl apply -f rbac/rbac.yaml
+                ../../kubectl apply -f deployment/nginx-ingress.yaml
+                sleep 5
+                ../../kubectl apply -f service/loadbalancer-aws-elb.yaml
+                cd -
+                rm -rf kubernetes-ingress
+                ./kubectl apply -f nginx-ingress-proxy.yaml
+                ./kubectl get svc --namespace=nginx-ingress
               """
             }
 
