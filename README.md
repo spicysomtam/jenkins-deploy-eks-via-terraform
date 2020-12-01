@@ -4,7 +4,9 @@ Deploy AWS EKS via a Jenkins job using terraform. The idea here is to easily dep
 
 ## Why not use eksctl?
 
-Why not use `eksctl`? This repo predates `eksctl` and AWS support for it. I might create an `eksctl` based deployment as it saves alot of development effort compared to `terraform`. Tis the nature of technology: nothing stays the same and something better may come along! A good devops practice: use whatever is easiest! If I was to do this again I would probably use `eksctl`.
+Why not use `eksctl`? This repo predates `eksctl` and AWS support for it. 
+
+I have now created a `eksctl` based deployment as it saves alot of development effort compared to `terraform` and solves inconsistencies and issues `eks` has. I would now suggest using my `eksctl` version [here](https://github.com/spicysomtam/jenkins-deploy-eks-via-eksctl) rather than this `terraform` based version.
 
 ## Use of EC2 instances via node groups
 
@@ -29,7 +31,6 @@ I also observe the pod startup and creation is much faster on k3s and gke than e
 Of all the cloud native kubernetes services, IMHO GCP is the best; not only are the clusters fast to deploy, many things such as ingress have been made easy to setup, and there are lots of guides for doing common tasks within the gcp console. It feels slick and polished. Google Cloud also has a command line tool and api interface.
 
 ## Resources
-
 
 This is based on the [eks-getting-started](https://github.com/terraform-providers/terraform-provider-aws/tree/master/examples/eks-getting-started) example in the terraform-provider-aws github repo.
 
