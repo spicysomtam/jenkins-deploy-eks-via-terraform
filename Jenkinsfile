@@ -170,6 +170,7 @@ pipeline {
             if (params.nginx_ingress == true) {
               echo "Setting up nginx ingress and load balancer."
               sh """
+                [ -d kubernetes-ingress ] && rm -rf kubernetes-ingress
                 git clone https://github.com/nginxinc/kubernetes-ingress.git
                 cd kubernetes-ingress/deployments/
                 kubectl apply -f common/ns-and-sa.yaml
