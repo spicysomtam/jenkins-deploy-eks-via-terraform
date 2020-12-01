@@ -10,6 +10,7 @@ pipeline {
     string(name: 'num_workers', defaultValue : '3', description: "k8s number of worker instances.")
     string(name: 'max_workers', defaultValue : '10', description: "k8s maximum number of worker instances that can be scaled.")
     string(name: 'credential', defaultValue : 'jenkins', description: "Jenkins credential that provides the AWS access key and secret.")
+    string(name: 'key_pair', defaultValue : 'spicysomtam-aws4', description: "EC2 instance ssh keypair.")
     booleanParam(name: 'cloudwatch', defaultValue : true, description: "Setup Cloudwatch logging, metrics and Container Insights?")
     booleanParam(name: 'nginx_ingress', defaultValue : true, description: "Setup nginx ingress and load balancer?")
     booleanParam(name: 'ca', defaultValue : false, description: "Setup k8s Cluster Autoscaler?")
@@ -60,6 +61,7 @@ pipeline {
                 -var num-workers=${params.num_workers} \
                 -var max-workers=${params.max_workers} \
                 -var cloudwatch=${params.cloudwatch} \
+                -var inst_key_pair=${params.key_pair} \
                 -var ca=${params.ca} \
                 -var k8s_version=${params.k8s_version} \
                 -out ${plan}
