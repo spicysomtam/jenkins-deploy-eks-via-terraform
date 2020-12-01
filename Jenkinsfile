@@ -73,7 +73,7 @@ pipeline {
 
     stage('TF Apply') {
       when {
-        expression { params.action == 'createa' }
+        expression { params.action == 'create' }
       }
       steps {
         script {
