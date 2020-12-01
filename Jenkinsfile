@@ -206,6 +206,14 @@ pipeline {
             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
 
             sh """
+              [ -d kubernetes-ingress ] && rm -rf kubernetes-ingress
+              git clone https://github.com/nginxinc/kubernetes-ingress.git
+
+              # Need to clean this up otherwise the vpc can't be deleted
+              kubectl delete -f kubernetes-ingress/deployments/service/loadbalancer-aws-elb.yaml || true
+              [ -d kubernetes-ingress ] && rm -rf kubernetes-ingress
+              sleep 20
+
               terraform workspace select ${params.cluster}
               terraform destroy -auto-approve
             """
