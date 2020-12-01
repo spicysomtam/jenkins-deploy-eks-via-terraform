@@ -64,6 +64,7 @@ pipeline {
                 -var inst_key_pair=${params.key_pair} \
                 -var ca=${params.ca} \
                 -var k8s_version=${params.k8s_version} \
+                -var aws_region=${params.region} \
                 -out ${plan}
             """
           }
