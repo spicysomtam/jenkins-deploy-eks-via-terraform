@@ -14,6 +14,7 @@ pipeline {
     booleanParam(name: 'cloudwatch', defaultValue : true, description: "Setup Cloudwatch logging, metrics and Container Insights?")
     booleanParam(name: 'nginx_ingress', defaultValue : true, description: "Setup nginx ingress and load balancer?")
     booleanParam(name: 'ca', defaultValue : false, description: "Setup k8s Cluster Autoscaler?")
+    booleanParam(name: 'cert_manager', defaultValue : false, description: "Setup cert-manager for certificate handling?")
     string(name: 'region', defaultValue : 'eu-west-1', description: "AWS region.")
   }
 
@@ -187,6 +188,19 @@ pipeline {
               """
             }
 
+            if (params.cert_manager == true) {
+              echo "Setting up cert-manager."
+              sh """
+                helm repo add jetstack https://charts.jetstack.io || true
+                helm repo update
+                kubectl create ns cert-manager
+                helm install cert-manager jetstack/cert-manager --namespace cert-manager --version v1.1.0 --set installCRDs=true
+                sleep 30 # allow cert-manager setup in the cluster
+                kubectl apply -f cluster-issuer-le-staging.yaml
+                kubectl apply -f cluster-issuer-le-prod.yaml
+              """
+            }
+ 
           }
         }
       }

@@ -109,6 +109,17 @@ The idea here is to set nginx ingress and then just use a single Layer4/TCP styl
 In essence you create a DNS cname record for each service, which points to the load balancer. On ingress the nginx ingress determines the DNS name requested and then directs traffic to the correct service. You can Google nginx ingress to discover more about it. Note this setup also supports TLS HTTPS ingress (see TLS in kubernetes documentation on ingress controllers).
 
 This is set by default, otherwise the EKS cluster has no ingress (just a load balancer for the k8s API). Its a good default if you are not sure what you want and anyway nginx ingress is the way to go with current k8s .
+
+# cert-manager install
+
+I added the setup of cert-manager, plus installing the ClusterIssuers for Letsencrypt (LE) staging and production using http01 validation method. This means you can use cert-manager to automatically generate LE certificates. 
+
+All you then need to do is point a dns cname record at the load balancer, create a staging cert for it, and then let cert-manager get a cert for you. Sometimes the staging cert does not work first time; if so delete the cert and try again. Once you have a staging cert working, you can replace it with a prod cert, and cert-manager will then manage the cert renewals, etc.
+
+Note: Staging certs won't pass validation on most web browsers while prod ones do. Be aware that prod ones are throttled and controlled more stringely than staging ones; thus why you need to get the staging working first, which will allow you to troubleshoot issues, etc.
+
+See cert manager full docs for details.
+
 # Kubernetes Cluster Autoscaler install
 
 I added this as an option (default not enabled). What is it? The kubernetes [Cluster Autoscaler](https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler) (CA) allows k8s to scale worker nodes up and down, dependant on load. Since EKS implements worker nodes via node groups and the autoscaling groups (ASG), a deployment within the cluster monitors pod load, and scales up nodes via the ASG when pods are not scheduled (not enough resources available to run them), and scales nodes down again when they are not used (typically after 10 minutes of idle).
