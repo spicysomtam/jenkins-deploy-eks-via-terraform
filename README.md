@@ -118,7 +118,7 @@ All you then need to do is point a dns cname record at the load balancer, create
 
 Note: Staging certs won't pass validation on most web browsers while prod ones do. Be aware that prod ones are throttled and controlled more stringely than staging ones; thus why you need to get the staging working first, which will allow you to troubleshoot issues, etc.
 
-See cert manager full docs for details.
+See cert manager docs for full details.
 
 # Kubernetes Cluster Autoscaler install
 
