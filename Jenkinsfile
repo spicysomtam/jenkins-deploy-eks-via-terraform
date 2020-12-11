@@ -9,6 +9,7 @@ pipeline {
     string(name: 'instance_type', defaultValue : 'm5.large', description: "k8s worker node instance type.")
     string(name: 'num_workers', defaultValue : '3', description: "k8s number of worker instances.")
     string(name: 'max_workers', defaultValue : '10', description: "k8s maximum number of worker instances that can be scaled.")
+    string(name: 'admin_users', defaultValue : '', description: "Comma delimited list of IAM users to add to the aws-auth config map.")
     string(name: 'credential', defaultValue : 'jenkins', description: "Jenkins credential that provides the AWS access key and secret.")
     string(name: 'key_pair', defaultValue : 'spicysomtam-aws4', description: "EC2 instance ssh keypair.")
     booleanParam(name: 'cloudwatch', defaultValue : true, description: "Setup Cloudwatch logging, metrics and Container Insights?")
@@ -117,6 +118,12 @@ pipeline {
                 true # jenkins likes happy endings!
               fi
             """
+
+            // If admin_users specified
+            if (params.admin_users != '') {
+              echo "Adding admin_users to configmap aws-auth."
+              sh "./generate-aws-auth-admins.sh ${params.admin_users} | kubectl apply -f -"
+            }
 
             if (params.cloudwatch == true) {
               echo "Setting up Cloudwatch logging and metrics."
