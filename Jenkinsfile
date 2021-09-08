@@ -57,9 +57,9 @@ pipeline {
             rm -rf linux-amd64
             chmod u+x kubectl helm
             ls -l kubectl helm )
-            echo "Checking jq is installed:"
-            which jq 
           """
+          println "Checking jq is installed:"
+          sh "which jq"
         }
       }
     }
