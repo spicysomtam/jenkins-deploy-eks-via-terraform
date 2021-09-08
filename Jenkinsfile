@@ -278,12 +278,12 @@ pipeline {
               git clone https://github.com/nginxinc/kubernetes-ingress.git
               (cd kubernetes-ingress/deployments/helm-chart
               git checkout v1.12.0
-              helm uninstall nginx-ingress . --namespace nginx-ingress 2> /dev/null || true)
+              helm uninstall nginx-ingress . --namespace nginx-ingress || true)
               [ -d kubernetes-ingress ] && rm -rf kubernetes-ingress
 
               helm repo add jetstack https://charts.jetstack.io || true
               helm repo update
-              helm uninstall cert-manager jetstack/cert-manager --namespace cert-manager 2> /dev/null || true
+              helm uninstall cert-manager jetstack/cert-manager --namespace cert-manager || true
               sleep 20
 
               terraform workspace select ${params.cluster}
