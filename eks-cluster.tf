@@ -57,7 +57,7 @@ resource "aws_eks_cluster" "eks" {
   name      = "${var.cluster-name}"
   role_arn  = aws_iam_role.cluster.arn
   version   = var.k8s_version
-  enabled_cluster_log_types = var.cloudwatch ? ["api", "audit", "authenticator", "controllerManager", "scheduler"] : []
+  enabled_cluster_log_types = var.cw_logs ? ["api", "audit", "authenticator", "controllerManager", "scheduler"] : []
 
   vpc_config {
     security_group_ids = [aws_security_group.cluster.id]

@@ -89,7 +89,7 @@ pipeline {
                 -var inst-type=${params.instance_type} \
                 -var num-workers=${params.num_workers} \
                 -var max-workers=${params.max_workers} \
-                -var cloudwatch=${params.cw_metrics} \
+                -var cw_logs=${params.cw_logs} \
                 -var inst_key_pair=${params.key_pair} \
                 -var ca=${params.ca} \
                 -var k8s_version=${params.k8s_version} \
@@ -136,18 +136,6 @@ pipeline {
             if (params.admin_users != '') {
               echo "Adding admin_users to configmap aws-auth."
               sh "./generate-aws-auth-admins.sh ${params.admin_users} | kubectl apply -f -"
-            }
-
-            // CW logs
-            // https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html
-            if (params.cw_logs == true) {
-              echo "Setting up Cloudwatch logs."
-              sh """
-                aws eks update-cluster-config \
-                  --region ${params.region} \
-                  --name ${params.cluster} \
-                  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
-              """
             }
 
             // CW Metrics and Container Insights setup
@@ -259,7 +247,6 @@ pipeline {
               aws eks update-kubeconfig --name ${params.cluster} --region ${params.region}
 
               # Some of these helm charts may not be installed; just try and remove them anyway
-              helm uninstall nginx-ingress --namespace nginx-ingress || true
               helm uninstall cert-manager --namespace cert-manager || true
               kubectl delete -f nginx-ingress-proxy.yaml || true
               helm uninstall nginx-ingress --namespace nginx-ingress || true
