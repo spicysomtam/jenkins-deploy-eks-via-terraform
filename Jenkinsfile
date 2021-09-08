@@ -48,7 +48,7 @@ pipeline {
           println "Getting the kubectl and helm binaries..."
           (major, minor) = params.k8s_version.split(/\./)
           sh """
-            mkdir bin
+            [ ! -d bin ] && mkdir bin
             ( cd bin
             # 'latest' kubectl is backward compatible with older api versions
             curl --silent -o kubectl https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/kubectl
