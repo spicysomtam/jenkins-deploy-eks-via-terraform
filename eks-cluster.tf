@@ -54,7 +54,7 @@ resource "aws_security_group" "cluster" {
 }
 
 resource "aws_eks_cluster" "eks" {
-  name      = "eks-${var.cluster-name}"
+  name      = "${var.cluster-name}"
   role_arn  = aws_iam_role.cluster.arn
   version   = var.k8s_version
   enabled_cluster_log_types = var.cloudwatch ? ["api", "audit", "authenticator", "controllerManager", "scheduler"] : []
