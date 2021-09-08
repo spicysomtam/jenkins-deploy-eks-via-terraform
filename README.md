@@ -4,11 +4,11 @@ Deploy AWS EKS via a Jenkins job using terraform. The idea here is to easily dep
 
 `eksctl` has now come along since I wrote this repo, and that is a simpler way of deploying EKS. Thus I created an `eksctl` based deployment [here](https://github.com/spicysomtam/jenkins-deploy-eks-via-eksctl) .
 
-I am still maintaining this repo, but have moved most of the docs to the `eksctl` repo to save duplication.
+I am still maintaining this repo, but have moved most of the docs to the `eksctl` repo to save duplication; so read those docs!
 
 ## Use of EC2 instances via node groups
 
-EC2 instances are used as EKS workers via a node group. An autoscaling group is defined so the number of EC2 instances can be scaled up and down.
+EC2 instances are used as EKS workers via a node group. An autoscaling group is defined so the number of EC2 instances can be scaled up and down using the Cluster Autoscaler.
 
 # Resources
 
@@ -34,7 +34,7 @@ Some changes to the aws provider example:
 
 # Jenkins pipeline
 
-The pipeline uses a terraform workspace for each cluster name, so you should be safe deploying multiple clusters via the same Jenkins job. Obviously state is maintained in the Jenkins job workspace (see To do below).
+The pipeline uses a `terraform` workspace for each cluster name, so you should be safe deploying multiple clusters via the same Jenkins job. Obviously state is maintained in the Jenkins job workspace (see To do below).
 
 ## terraform tool install
 
@@ -44,9 +44,7 @@ You need to install the Jenkins terraform plugin, and then define it as a tool i
 
 Several roles are required, which is confusing. Thus decided to document these in simple terms.
 
-Since EKS manages the kubernetes backplane and infrastructure, there are no masters in EKS. When you enter `kubectl get nodes` you will just see the worker nodes that are either implemented via autoscaling groups (old method) or via node groups (new in EKS 1.14). With other kubernetes platforms, this command will also show Master nodes. Note that as well as using node groups, you can now use fargate, which also shows up as worker nodes via the `kubectl get nodes` command.
-
-I am just going to discuss those required with kubernetes 1.17 EKS. 
+Since EKS manages the kubernetes backplane and infrastructure, there are no masters in EKS. When you enter `kubectl get nodes` you will just see the worker nodes that are either implemented via node groups. With other kubernetes platforms, this command will also show Master nodes. Note that as well as using node groups, you can now use fargate, which also shows up as worker nodes via the `kubectl get nodes` command.
 
 Required roles:
 * Cluster service role: this is associated with the cluster (and its creation). This allow the Kubernetes control plane to manage AWS resources on behalf of the cluster. The policy `AmazonEKSClusterPolicy` has all the required permissions, so best use that (unless you require a custom setup). The service `eks.amazonaws.com` needs to be able to assume this role (trust relationship). We also attach policy `AmazonEKSVPCResourceController` to the role, to allow security groups for pods (a new eks 1.17 feature; see [this](https://docs.aws.amazon.com/eks/latest/userguide/security-groups-for-pods.html) for details).
@@ -54,8 +52,6 @@ Required roles:
   * AmazonEKSWorkerNodePolicy
   * AmazonEKS_CNI_Policy
   * AmazonEC2ContainerRegistryReadOnly
-
-It appears the `aws-auth` configmap being inplace allows nodes to be added to the cluster automatically.
 
 # To do
 

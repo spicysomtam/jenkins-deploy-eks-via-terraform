@@ -256,14 +256,34 @@ pipeline {
             credentialsId: params.credential, 
             accessKeyVariable: 'AWS_ACCESS_KEY_ID',  
             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+            // All this complexity to get the EC2 instance role and then dettach the policy for CW Metrics
+            // We need to detach before running eksctl otherwise eksctl will fail to delete
+            roleArn = sh(returnStdout: true, 
+              script: """
+                aws eks describe-nodegroup \
+                  --nodegroup-name ${params.cluster}-0 \
+                  --cluster-name ${params.cluster} \
+                  --query nodegroup.nodeRole \
+                  --output text \
+                  --region ${params.region}
+              """).trim()
 
+            role = roleArn.split('/')[1]
+
+            // Some of these helm charts may not be installed; just try and remove them anyway
             sh """
+              aws iam detach-role-policy --role-name ${role} --policy-arn arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy || true
+
               [ -d kubernetes-ingress ] && rm -rf kubernetes-ingress
               git clone https://github.com/nginxinc/kubernetes-ingress.git
-
-              # Need to clean this up otherwise the vpc can't be deleted
-              kubectl delete -f kubernetes-ingress/deployments/service/loadbalancer-aws-elb.yaml || true
+              (cd kubernetes-ingress/deployments/helm-chart
+              git checkout v1.12.0
+              helm uninstall nginx-ingress . --namespace nginx-ingress 2> /dev/null || true)
               [ -d kubernetes-ingress ] && rm -rf kubernetes-ingress
+
+              helm repo add jetstack https://charts.jetstack.io || true
+              helm repo update
+              helm uninstall cert-manager jetstack/cert-manager --namespace cert-manager 2> /dev/null || true
               sleep 20
 
               terraform workspace select ${params.cluster}
