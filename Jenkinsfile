@@ -261,7 +261,7 @@ pipeline {
             roleArn = sh(returnStdout: true, 
               script: """
                 aws eks describe-nodegroup \
-                  --nodegroup-name eks-${params.cluster}-0 \
+                  --nodegroup-name ${params.cluster}-0 \
                   --cluster-name ${params.cluster} \
                   --query nodegroup.nodeRole \
                   --output text \
