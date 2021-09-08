@@ -67,10 +67,10 @@ variable "max-workers" {
   type    = string
 }
 
-variable "cloudwatch" {
+variable "cw_logs" {
   type    = bool 
-  default = true
-  description = "Install Cloudwatch logging, metrics and Container Insights."
+  default = false
+  description = "Setup full Cloudwatch logging."
 }
 
 variable "ca" {

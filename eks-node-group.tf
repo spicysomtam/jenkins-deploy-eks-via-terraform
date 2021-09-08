@@ -66,7 +66,7 @@ resource "aws_iam_role_policy_attachment" "node-AmazonEC2ContainerRegistryReadOn
 }
 
 resource "aws_iam_role_policy_attachment" "CloudWatchAgentServerPolicy" {
-  count      = var.cloudwatch ? 1 : 0
+  count      = var.cw_logs ? 1 : 0
   policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
   role       = aws_iam_role.node.name
 }
