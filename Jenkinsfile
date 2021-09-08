@@ -242,6 +242,7 @@ pipeline {
 
             sh """
               aws eks update-kubeconfig --name ${params.cluster} --region ${params.region}
+
               # Some of these helm charts may not be installed; just try and remove them anyway
               helm uninstall nginx-ingress --namespace nginx-ingress || true
               helm uninstall cert-manager --namespace cert-manager || true
