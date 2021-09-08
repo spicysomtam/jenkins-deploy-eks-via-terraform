@@ -201,16 +201,9 @@ pipeline {
             if (params.nginx_ingress == true) {
               echo "Setting up nginx ingress and load balancer."
               sh """
-                aws eks update-kubeconfig --name ${params.cluster} --region ${params.region}
                 helm repo add nginx-stable https://helm.nginx.com/stable
                 helm repo update
-                #[ -d kubernetes-ingress ] && rm -rf kubernetes-ingress
-                #it clone https://github.com/nginxinc/kubernetes-ingress.git
-                #cd kubernetes-ingress/deployments/helm-chart
-                #it checkout v1.12.0
-                #helm install nginx-ingress . --namespace nginx-ingress --create-namespace)
                 helm install nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress --create-namespace
-                #rm -rf kubernetes-ingress
                 kubectl apply -f nginx-ingress-proxy.yaml
                 kubectl get svc --namespace=nginx-ingress
               """
