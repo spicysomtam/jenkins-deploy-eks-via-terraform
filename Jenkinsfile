@@ -2,7 +2,7 @@ pipeline {
 
    parameters {
     choice(name: 'action', choices: 'create\ndestroy', description: 'Create/update or destroy the eks cluster.')
-    string(name: 'cluster', defaultValue : 'demo', description: "EKS cluster name;eg demo creates cluster named eks-demo.")
+    string(name: 'cluster', defaultValue : 'demo', description: "EKS cluster name.")
     choice(name: 'k8s_version', choices: '1.21\n1.20\n1.19\n1.18\n1.17\n1.18\n1.16', description: 'K8s version to install.')
     string(name: 'vpc_network', defaultValue : '10.0', description: "First 2 octets of vpc network; eg 10.0")
     string(name: 'num_subnets', defaultValue : '3', description: "Number of vpc subnets/AZs.")
@@ -42,7 +42,7 @@ pipeline {
     stage('Setup') {
       steps {
         script {
-          currentBuild.displayName = "#" + env.BUILD_NUMBER + " " + params.action + " eks-" + params.cluster
+          currentBuild.displayName = "#" + env.BUILD_NUMBER + " " + params.action + " " + params.cluster
           plan = params.cluster + '.plan'
 
           println "Getting the jq, kubectl and helm binaries..."
@@ -102,7 +102,7 @@ pipeline {
       }
       steps {
         script {
-          input "Create/update Terraform stack eks-${params.cluster} in aws?" 
+          input "Create/update Terraform stack ${params.cluster} in aws?" 
 
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
           credentialsId: params.credential, 
@@ -128,7 +128,7 @@ pipeline {
           accessKeyVariable: 'AWS_ACCESS_KEY_ID',  
           secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
             
-            sh "aws eks update-kubeconfig --name eks-${params.cluster} --region ${params.region}"
+            sh "aws eks update-kubeconfig --name ${params.cluster} --region ${params.region}"
 
             // If admin_users specified
             if (params.admin_users != '') {
@@ -143,7 +143,7 @@ pipeline {
               echo "Setting up Cloudwatch logging and metrics."
               sh """
                 curl --silent https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluentd-quickstart.yaml | \\
-                  sed "s/{{cluster_name}}/eks-${params.cluster}/;s/{{region_name}}/${params.region}/" | \\
+                  sed "s/{{cluster_name}}/${params.cluster}/;s/{{region_name}}/${params.region}/" | \\
                   kubectl apply -f -
               """
 
@@ -202,7 +202,7 @@ pipeline {
                 kubectl -n kube-system annotate deployment.apps/cluster-autoscaler cluster-autoscaler.kubernetes.io/safe-to-evict="false"
                 kubectl -n kube-system get deployment.apps/cluster-autoscaler -o json | \\
                   jq | \\
-                  sed 's/<YOUR CLUSTER NAME>/eks-${params.cluster}/g' | \\
+                  sed 's/<YOUR CLUSTER NAME>/${params.cluster}/g' | \\
                   jq '.spec.template.spec.containers[0].command += ["--balance-similar-node-groups","--skip-nodes-with-system-pods=false"]' | \\
                   kubectl apply -f -
                 kubectl -n kube-system set image deployment.apps/cluster-autoscaler cluster-autoscaler=${gregion}.gcr.io/k8s-artifacts-prod/autoscaling/cluster-autoscaler:v${params.k8s_version}.${tag}
@@ -250,7 +250,7 @@ pipeline {
       }
       steps {
         script {
-          input "Destroy Terraform stack eks-${params.cluster} in aws?" 
+          input "Destroy Terraform stack ${params.cluster} in aws?" 
 
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', 
             credentialsId: params.credential, 
@@ -261,7 +261,7 @@ pipeline {
             roleArn = sh(returnStdout: true, 
               script: """
                 aws eks describe-nodegroup \
-                  --nodegroup-name ${params.cluster}-0 \
+                  --nodegroup-name eks-${params.cluster}-0 \
                   --cluster-name ${params.cluster} \
                   --query nodegroup.nodeRole \
                   --output text \
