@@ -2,9 +2,9 @@
 
 Deploy AWS EKS via a Jenkins job using terraform. The idea here is to easily deploy EKS to AWS, specifying some settings via pipeline parameters.
 
-`eksctl` has now come along since I wrote this repo, and that is now my preferred way of deploying EKS. Thus I created an `eksctl` based deployment [here](https://github.com/spicysomtam/jenkins-deploy-eks-via-eksctl) .
+`eksctl` has now come along since I wrote this repo, and that is a simpler way of deploying EKS. Thus I created an `eksctl` based deployment [here](https://github.com/spicysomtam/jenkins-deploy-eks-via-eksctl) .
 
-I am still maintaining this repo, but have moved most of the docs to my `eksctl` repo (to save duplication).
+I am still maintaining this repo, but have moved most of the docs to the `eksctl` repo to save duplication.
 
 ## Use of EC2 instances via node groups
 
@@ -34,12 +34,11 @@ Some changes to the aws provider example:
 
 # Jenkins pipeline
 
-Jenkins needs the following linux commands, which can either be installed via the Linux package manager or in the case of `terraform`, downloaded: 
-* terraform (0.12.x)
-* jq
-* kubectl
-
 The pipeline uses a terraform workspace for each cluster name, so you should be safe deploying multiple clusters via the same Jenkins job. Obviously state is maintained in the Jenkins job workspace (see To do below).
+
+## terraform tool install
+
+You need to install the Jenkins terraform plugin, and then define it as a tool in Manage Jenkins->Tools. Check the Jenkinsfile for the version required; for example I setup the tool version as `1.0` for all `1.0.x` releases available and just update the minor version used as newer versions become available.
 
 # IAM roles required
 
