@@ -3,7 +3,7 @@
 #
 
 resource "aws_iam_role" "node" {
-  name = "eks-${var.cluster-name}-node"
+  name = "eks-${var.cluster-name}-node-0"
 
   assume_role_policy = <<POLICY
 {
@@ -98,7 +98,7 @@ resource "aws_eks_node_group" "node" {
 
   # This does not work although the docs say it should! See https://github.com/aws/containers-roadmap/issues/608
   tags = {
-    "Name" = "eks-${var.cluster-name}-1"
+    "Name" = "${var.cluster-name}-0"
   }
 
   # Ensure that IAM Role permissions are created before and deleted after EKS Node Group handling.
@@ -109,5 +109,3 @@ resource "aws_eks_node_group" "node" {
     aws_iam_role_policy_attachment.node-AmazonEC2ContainerRegistryReadOnly,
   ]
 }
-
-

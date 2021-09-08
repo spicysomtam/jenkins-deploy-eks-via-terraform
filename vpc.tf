@@ -11,7 +11,7 @@ resource "aws_vpc" "eks" {
 
   tags = {
     "Name"                                          = "eks-${var.cluster-name}"
-    "kubernetes.io/cluster/eks-${var.cluster-name}" = "shared"
+    "kubernetes.io/cluster/${var.cluster-name}" = "shared"
   }
 }
 
@@ -25,7 +25,7 @@ resource "aws_subnet" "eks" {
 
   tags = {
     "Name"                                          = "eks-${var.cluster-name}"
-    "kubernetes.io/cluster/eks-${var.cluster-name}" = "shared"
+    "kubernetes.io/cluster/${var.cluster-name}" = "shared"
   }
 }
 
