@@ -31,6 +31,7 @@ pipeline {
   environment {
     // Set path to workspace bin dir
     PATH = "${env.WORKSPACE}/bin:${env.PATH}"
+    KUBECONFIG = "${env.WORKSPACE}/.kube/config"
   }
 
   tools {
@@ -109,10 +110,7 @@ pipeline {
           credentialsId: params.credential, 
           accessKeyVariable: 'AWS_ACCESS_KEY_ID',  
           secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-            
-            sh """
-              terraform apply -input=false -auto-approve ${plan}
-            """
+            sh "terraform apply -input=false -auto-approve ${plan}"
           }
         }
       }
@@ -203,6 +201,7 @@ pipeline {
             if (params.nginx_ingress == true) {
               echo "Setting up nginx ingress and load balancer."
               sh """
+                aws eks update-kubeconfig --name ${params.cluster} --region ${params.region}
                 helm repo add nginx-stable https://helm.nginx.com/stable
                 helm repo update
                 #[ -d kubernetes-ingress ] && rm -rf kubernetes-ingress
@@ -249,6 +248,7 @@ pipeline {
             secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
 
             sh """
+              aws eks update-kubeconfig --name ${params.cluster} --region ${params.region}
               # Some of these helm charts may not be installed; just try and remove them anyway
               helm uninstall nginx-ingress --namespace nginx-ingress || true
               helm uninstall cert-manager --namespace cert-manager || true
