@@ -12,7 +12,8 @@ pipeline {
     string(name: 'admin_users', defaultValue : '', description: "Comma delimited list of IAM users to add to the aws-auth config map.")
     string(name: 'credential', defaultValue : 'jenkins', description: "Jenkins credential that provides the AWS access key and secret.")
     string(name: 'key_pair', defaultValue : 'spicysomtam-aws7', description: "EC2 instance ssh keypair.")
-    booleanParam(name: 'cloudwatch', defaultValue : true, description: "Setup Cloudwatch logging, metrics and Container Insights?")
+    booleanParam(name: 'cw_logs', defaultValue : true, description: "Setup Cloudwatch logging?")
+    booleanParam(name: 'cw_metrics', defaultValue : false, description: "Setup Cloudwatch metrics and Container Insights?")
     booleanParam(name: 'nginx_ingress', defaultValue : true, description: "Setup nginx ingress and load balancer?")
     booleanParam(name: 'ca', defaultValue : false, description: "Setup k8s Cluster Autoscaler?")
     booleanParam(name: 'cert_manager', defaultValue : false, description: "Setup cert-manager for certificate handling?")
@@ -88,7 +89,7 @@ pipeline {
                 -var inst-type=${params.instance_type} \
                 -var num-workers=${params.num_workers} \
                 -var max-workers=${params.max_workers} \
-                -var cloudwatch=${params.cloudwatch} \
+                -var cloudwatch=${params.cw_metrics} \
                 -var inst_key_pair=${params.key_pair} \
                 -var ca=${params.ca} \
                 -var k8s_version=${params.k8s_version} \
@@ -137,11 +138,23 @@ pipeline {
               sh "./generate-aws-auth-admins.sh ${params.admin_users} | kubectl apply -f -"
             }
 
+            // CW logs
+            // https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html
+            if (params.cw_logs == true) {
+              echo "Setting up Cloudwatch logs."
+              sh """
+                aws eks update-cluster-config \
+                  --region ${params.region} \
+                  --name ${params.cluster} \
+                  --logging '{"clusterLogging":[{"types":["api","audit","authenticator","controllerManager","scheduler"],"enabled":true}]}'
+              """
+            }
+
             // CW Metrics and Container Insights setup
             // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-prerequisites.html
             // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-quickstart.html
-            if (params.cloudwatch == true) {
-              echo "Setting up Cloudwatch logging and metrics."
+            if (params.cw_metrics == true) {
+              echo "Setting up Cloudwatch metrics and Container Insights."
               sh """
                 curl --silent https://raw.githubusercontent.com/aws-samples/amazon-cloudwatch-container-insights/latest/k8s-deployment-manifest-templates/deployment-mode/daemonset/container-insights-monitoring/quickstart/cwagent-fluentd-quickstart.yaml | \\
                   sed "s/{{cluster_name}}/${params.cluster}/;s/{{region_name}}/${params.region}/" | \\
