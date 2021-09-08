@@ -3,7 +3,7 @@ pipeline {
    parameters {
     choice(name: 'action', choices: 'create\ndestroy', description: 'Create/update or destroy the eks cluster.')
     string(name: 'cluster', defaultValue : 'demo', description: "EKS cluster name.")
-    choice(name: 'k8s_version', choices: '1.21\n1.20\n1.19\n1.18\n1.17\n1.18\n1.16', description: 'K8s version to install.')
+    choice(name: 'k8s_version', choices: '1.21\n1.20\n1.19\n1.18\n1.17\n1.16', description: 'K8s version to install.')
     string(name: 'vpc_network', defaultValue : '10.0', description: "First 2 octets of vpc network; eg 10.0")
     string(name: 'num_subnets', defaultValue : '3', description: "Number of vpc subnets/AZs.")
     string(name: 'instance_type', defaultValue : 'm5.large', description: "k8s worker node instance type.")
@@ -31,6 +31,7 @@ pipeline {
   environment {
     // Set path to workspace bin dir
     PATH = "${env.WORKSPACE}/bin:${env.PATH}"
+    // Workspace kube config so we don't affect other Jenkins jobs
     KUBECONFIG = "${env.WORKSPACE}/.kube/config"
   }
 
@@ -59,6 +60,7 @@ pipeline {
             chmod u+x kubectl helm
             ls -l kubectl helm )
           """
+          // This will halt the build if jq not found
           println "Checking jq is installed:"
           sh "which jq"
         }
@@ -135,7 +137,7 @@ pipeline {
               sh "./generate-aws-auth-admins.sh ${params.admin_users} | kubectl apply -f -"
             }
 
-            // The recently introduced CW Metrics and Container Insights setup
+            // CW Metrics and Container Insights setup
             // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-prerequisites.html
             // https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Container-Insights-setup-EKS-quickstart.html
             if (params.cloudwatch == true) {
@@ -181,7 +183,7 @@ pipeline {
               }
 
               // Setup documented here: https://docs.aws.amazon.com/eks/latest/userguide/cluster-autoscaler.html
-              // Tested ca 2021/k8s 1.21.
+              // Tested ca late 2021 on k8s 1.21.
               sh """
                 kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
                 kubectl -n kube-system annotate deployment.apps/cluster-autoscaler cluster-autoscaler.kubernetes.io/safe-to-evict="false"
@@ -197,7 +199,7 @@ pipeline {
 
             // See: https://aws.amazon.com/premiumsupport/knowledge-center/eks-access-kubernetes-services/
             // Also https://docs.nginx.com/nginx-ingress-controller/installation/installation-with-helm/
-            // Switched to helm install 2021 to simplify install across different k8s versions.
+            // Switched to helm install late 2021 to simplify install across different k8s versions.
             if (params.nginx_ingress == true) {
               echo "Setting up nginx ingress and load balancer."
               sh """
@@ -209,7 +211,7 @@ pipeline {
               """
             }
 
-            // Updated cert-manager version installed 2021
+            // Updated cert-manager version installed late 2021
             if (params.cert_manager == true) {
               echo "Setting up cert-manager."
               sh """

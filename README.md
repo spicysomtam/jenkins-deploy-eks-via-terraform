@@ -2,9 +2,7 @@
 
 Deploy AWS EKS via a Jenkins job using terraform. The idea here is to easily deploy EKS to AWS, specifying some settings via pipeline parameters.
 
-`eksctl` has now come along since I wrote this repo, and that is a simpler way of deploying EKS. Thus I created an `eksctl` based deployment [here](https://github.com/spicysomtam/jenkins-deploy-eks-via-eksctl) .
-
-I am still maintaining this repo, but have moved most of the docs to the `eksctl` repo to save duplication; so read those docs!
+`eksctl` has now come along since I wrote this repo, and that is a simpler way of deploying EKS. Thus I created an `eksctl` based deployment [here](https://github.com/spicysomtam/jenkins-deploy-eks-via-eksctl). Both the `eksctl` and this deploy have similar setups, so where there is duplicate, refer to the `eksctl` docs. I am maintaining this repo and the docs here are specific to the `terraform` deploy.
 
 For each cluster the deploy creates a vpc, 3 subnets and some networking infra allowing connection out onto the internet so you can access the cluster remotely. You could adapt it to run on the default vpc, but then there is some danger in having many clusters on the default vpc and then hitting issues with running out of IP addresses.
 
@@ -31,7 +29,7 @@ Some changes to the aws provider example:
   + vpc-subnets: number of subnets/az's (default 3).
   + inst-type: Type of instance to deploy as the worker nodes (default `m4.large`).
   + num-workers: Number of workers to deploy (default `3`).
-* The cluster name has been changed from `terraform-eks-demo` to `-<your-name>`; this means multiple eks instances can be deployed, using different names, from the same Jenkins pipeline.
+* The cluster name has been changed from `terraform-eks-demo` to `<your-name>`; this means multiple eks instances can be deployed, using different names, from the same Jenkins pipeline.
 * The security group providing access to the k8s api has been adapted to allow you to pass cidr addresses to it, so you can customise how it can be accessed. The provider example got your public ip from `http://ipv4.icanhazip.com/`; you are welcome to continue using this!
 
 # Jenkins pipeline
@@ -40,7 +38,7 @@ The pipeline uses a `terraform` workspace for each cluster name, so you should b
 
 ## terraform tool install
 
-You need to install the Jenkins terraform plugin, and then define it as a tool in Manage Jenkins->Tools. Check the Jenkinsfile for the version required; for example I setup the tool version as `1.0` for all `1.0.x` releases available; just update the minor version used as newer versions become available.
+You need to install the Jenkins terraform plugin, and then define it as a tool in Manage Jenkins->Tools. Check the Jenkinsfile for the version required; for example I setup the tool version as `1.0` for all `1.0.x` releases available; just update the minor version used as newer versions become available. Second digit (eg 1.x) is considered functionality change with terraform so best use labels like `1.0`,`1.1`, etc.
 
 # IAM roles required
 
