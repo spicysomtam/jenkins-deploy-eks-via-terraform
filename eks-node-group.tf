@@ -80,7 +80,7 @@ resource "aws_iam_role_policy_attachment" "node_ca" {
 
 resource "aws_eks_node_group" "node" {
   cluster_name    = aws_eks_cluster.eks.name
-  node_group_name = "eks-${var.cluster-name}-0"
+  node_group_name = "${var.cluster-name}-0"
   node_role_arn   = aws_iam_role.node.arn
   subnet_ids      = aws_subnet.eks.*.id
   instance_types  = [ var.inst-type ]
