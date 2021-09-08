@@ -57,7 +57,8 @@ pipeline {
             rm -rf linux-amd64
             chmod u+x kubectl helm
             ls -l kubectl helm )
-            which jq # check jq is installed via os pkg manager
+            echo "Checking jq is installed:"
+            which jq 
           """
         }
       }
@@ -202,12 +203,15 @@ pipeline {
             if (params.nginx_ingress == true) {
               echo "Setting up nginx ingress and load balancer."
               sh """
-                [ -d kubernetes-ingress ] && rm -rf kubernetes-ingress
-                git clone https://github.com/nginxinc/kubernetes-ingress.git
-                (cd kubernetes-ingress/deployments/helm-chart
-                git checkout v1.12.0
-                helm install nginx-ingress . --namespace nginx-ingress --create-namespace)
-                rm -rf kubernetes-ingress
+                helm repo add nginx-stable https://helm.nginx.com/stable
+                helm repo update
+                #[ -d kubernetes-ingress ] && rm -rf kubernetes-ingress
+                #it clone https://github.com/nginxinc/kubernetes-ingress.git
+                #cd kubernetes-ingress/deployments/helm-chart
+                #it checkout v1.12.0
+                #helm install nginx-ingress . --namespace nginx-ingress --create-namespace)
+                helm install nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress --create-namespace
+                #rm -rf kubernetes-ingress
                 kubectl apply -f nginx-ingress-proxy.yaml
                 kubectl get svc --namespace=nginx-ingress
               """
@@ -246,9 +250,10 @@ pipeline {
 
             sh """
               # Some of these helm charts may not be installed; just try and remove them anyway
+              helm uninstall nginx-ingress --namespace nginx-ingress || true
+              helm uninstall cert-manager --namespace cert-manager || true
               kubectl delete -f nginx-ingress-proxy.yaml || true
               helm uninstall nginx-ingress --namespace nginx-ingress || true
-              helm uninstall cert-manager jetstack/cert-manager --namespace cert-manager || true
               sleep 20
 
               terraform workspace select ${params.cluster}
