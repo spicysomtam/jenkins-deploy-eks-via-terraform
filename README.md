@@ -6,6 +6,8 @@ Deploy AWS EKS via a Jenkins job using terraform. The idea here is to easily dep
 
 I am still maintaining this repo, but have moved most of the docs to the `eksctl` repo to save duplication; so read those docs!
 
+For each cluster the deploy creates a vpc, 3 subnets and some networking infra allowing connection out onto the internet so you can access the cluster remotely. You could adapt it to run on the default vpc, but then there is some danger in having many clusters on the default vpc and then hitting issues with running out of IP addresses.
+
 ## Use of EC2 instances via node groups
 
 EC2 instances are used as EKS workers via a node group. An autoscaling group is defined so the number of EC2 instances can be scaled up and down using the Cluster Autoscaler.
