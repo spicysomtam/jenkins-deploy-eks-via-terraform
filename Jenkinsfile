@@ -146,20 +146,6 @@ pipeline {
                   sed "s/{{cluster_name}}/${params.cluster}/;s/{{region_name}}/${params.region}/" | \\
                   kubectl apply -f -
               """
-
-              // All this complexity to get the EC2 instance role and then attach the policy for CW Metrics
-              roleArn = sh(returnStdout: true, 
-                script: """
-                aws eks describe-nodegroup --nodegroup-name ${params.cluster}-0 \
-                  --cluster-name ${params.cluster} \
-                  --query nodegroup.nodeRole \
-                  --output text \
-                  --region ${params.region}
-                """).trim()
-
-              role = roleArn.split('/')[1]
-
-              sh "aws iam attach-role-policy --role-name ${role} --policy-arn arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy --region ${params.region}"
             }
 
             if (params.ca == true) {
@@ -200,6 +186,7 @@ pipeline {
               sh """
                 kubectl apply -f https://raw.githubusercontent.com/kubernetes/autoscaler/master/cluster-autoscaler/cloudprovider/aws/examples/cluster-autoscaler-autodiscover.yaml
                 kubectl -n kube-system annotate deployment.apps/cluster-autoscaler cluster-autoscaler.kubernetes.io/safe-to-evict="false"
+                sleep 5
                 kubectl -n kube-system get deployment.apps/cluster-autoscaler -o json | \\
                   jq | \\
                   sed 's/<YOUR CLUSTER NAME>/${params.cluster}/g' | \\
