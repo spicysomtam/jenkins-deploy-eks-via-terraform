@@ -14,6 +14,9 @@ pipeline {
     string(name: 'key_pair', defaultValue : 'spicysomtam-aws7', description: "EC2 instance ssh keypair.")
     booleanParam(name: 'cw_logs', defaultValue : true, description: "Setup Cloudwatch logging?")
     booleanParam(name: 'cw_metrics', defaultValue : false, description: "Setup Cloudwatch metrics and Container Insights?")
+    booleanParam(name: 'metrics_server', defaultValue : true, description: "Setup k8s metrics-server?")
+    booleanParam(name: 'dashboard', defaultValue : false, description: "Setup k8s dashboard?")
+    booleanParam(name: 'prometheus', defaultValue : true, description: "Setup k8s prometheus?")
     booleanParam(name: 'nginx_ingress', defaultValue : true, description: "Setup nginx ingress and load balancer?")
     booleanParam(name: 'ca', defaultValue : false, description: "Setup k8s Cluster Autoscaler?")
     booleanParam(name: 'cert_manager', defaultValue : false, description: "Setup cert-manager for certificate handling?")
@@ -150,6 +153,45 @@ pipeline {
               """
             }
 
+            // https://docs.aws.amazon.com/eks/latest/userguide/metrics-server.html
+            // Need metrics server for horizontal and vertical pod autoscalers, prometheus and k8s dashboard
+            if (params.metrics_server == true) {
+              echo "Setting up k8s metrics-server."
+              sh "kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
+            }
+
+            // https://docs.aws.amazon.com/eks/latest/userguide/dashboard-tutorial.html
+            if (params.dashboard == true) {
+              echo "Setting up k8s dashboard."
+              sh """
+                kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.5/aio/deploy/recommended.yaml
+                kubectl apply -f eks-admin-service-account.yaml
+              """
+
+              echo "You need to get the secret token and then use kubectl proxy to get to the dashboard:"
+              echo "kubectl -n kube-system describe secret \$(kubectl -n kube-system get secret | grep eks-admin | awk '{print \$1}')"
+              echo "kubectl proxy"
+              echo "Then visit: http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#!/login"
+              echo "See docs at https://docs.aws.amazon.com/eks/latest/userguide/dashboard-tutorial.html"
+            }
+
+            // https://docs.aws.amazon.com/eks/latest/userguide/prometheus.html
+            if (params.prometheus == true) {
+              echo "Setting up k8s prometheus."
+              sh """
+                helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+                helm repo update
+                helm install prometheus prometheus-community/prometheus \
+                  --namespace prometheus \
+                  --create-namespace \
+                  --set alertmanager.persistentVolume.storageClass="gp2",server.persistentVolume.storageClass="gp2"
+              """
+
+              echo "To connect to prometheus, follow the instructions above, then connect to http://localhost:9090"
+              echo "See docs at https://docs.aws.amazon.com/eks/latest/userguide/prometheus.html"
+              echo "Alternativly use k8s Lens which is much easier (choose Helm for the Prometheus setup its not auto detected)."
+            }
+
             if (params.ca == true) {
               echo "Setting up k8s Cluster Autoscaler."
 
@@ -208,6 +250,7 @@ pipeline {
                 helm repo update
                 helm install nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress --create-namespace
                 kubectl apply -f nginx-ingress-proxy.yaml
+                echo "Dns name of nginx ingress load balancer is below:"
                 kubectl get svc --namespace=nginx-ingress
               """
             }
@@ -247,6 +290,7 @@ pipeline {
               aws eks update-kubeconfig --name ${params.cluster} --region ${params.region}
 
               # Some of these helm charts may not be installed; just try and remove them anyway
+              helm uninstall prometheus --namespace prometheus || true
               helm uninstall cert-manager --namespace cert-manager || true
               kubectl delete -f nginx-ingress-proxy.yaml || true
               helm uninstall nginx-ingress --namespace nginx-ingress || true
