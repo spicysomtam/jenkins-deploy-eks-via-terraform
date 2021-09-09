@@ -158,7 +158,7 @@ pipeline {
             if (params.metrics_server == true) {
               echo "Setting up k8s metrics-server."
               sh "kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml"
-           }
+            }
 
             // https://docs.aws.amazon.com/eks/latest/userguide/dashboard-tutorial.html
             if (params.dashboard == true) {
@@ -187,8 +187,7 @@ pipeline {
                   --set alertmanager.persistentVolume.storageClass="gp2",server.persistentVolume.storageClass="gp2"
               """
 
-              echo "To connect to prometheus, port forward to it, then connect to http://localhost:9090"
-              echo "kubectl --namespace=prometheus port-forward deploy/prometheus-server 9090"
+              echo "To connect to prometheus, follow the instructions above, then connect to http://localhost:9090"
               echo "See docs at https://docs.aws.amazon.com/eks/latest/userguide/prometheus.html"
               echo "Alternativly use k8s Lens which is much easier (choose Helm for the Prometheus setup its not auto detected)."
             }
@@ -251,6 +250,7 @@ pipeline {
                 helm repo update
                 helm install nginx-ingress nginx-stable/nginx-ingress --namespace nginx-ingress --create-namespace
                 kubectl apply -f nginx-ingress-proxy.yaml
+                echo "Dns name of nginx ingress load balancer is below:"
                 kubectl get svc --namespace=nginx-ingress
               """
             }
