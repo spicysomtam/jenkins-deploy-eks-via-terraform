@@ -290,6 +290,7 @@ pipeline {
               aws eks update-kubeconfig --name ${params.cluster} --region ${params.region}
 
               # Some of these helm charts may not be installed; just try and remove them anyway
+              helm uninstall prometheus --namespace prometheus || true
               helm uninstall cert-manager --namespace cert-manager || true
               kubectl delete -f nginx-ingress-proxy.yaml || true
               helm uninstall nginx-ingress --namespace nginx-ingress || true
