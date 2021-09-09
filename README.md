@@ -40,17 +40,6 @@ The pipeline uses a `terraform` workspace for each cluster name, so you should b
 
 You need to install the Jenkins terraform plugin, and then define it as a tool in Manage Jenkins->Tools. Check the Jenkinsfile for the version required; for example I setup the tool version as `1.0` for all `1.0.x` releases available; just update the minor version used as newer versions become available. Second digit (eg 1.x) is considered functionality change with terraform so best use labels like `1.0`,`1.1`, etc.
 
-## Features and options available via the Jenkins pipeline
-
-We can automatically install these features:
-* Cloudwatch logging: all cluster backplane logging goes into cloudwatch. Enabled by default.
-* Cloudwatch metrics and container insights. This can cost alot of money in terms of aws bills. Thus its default is disabled. Use metrics-server and prometheus instead (and these are better imho).
-* Kubernetes dashboard. Some people like this, especially if you are new to k8s, or don't have access to the command line. I would recommend k8s Lens instead, which is a client side program. By default its disabled.
-* Prometheus metrics scraper. This is used by various monitoring software (including Lens). By default its enabled
-* nginx-ingress. This is discussed elsewhere. Enable an ingress controller, which is extremly useful and thus enabled by default.
-* Cluster autoscaler. Spin up and down nodes depending on whether pods are not scheduled (eg the cluster runs out of resources). Only enable for prod deploys and thus disabled by default.
-* cert-manager. Automatically manage TLS certs in k8s. Very useful for free Letsencrypt certs (but also works for others such as Godaddy, etc). Disabled by default.
-
 # IAM roles required
 
 Several roles are required, which is confusing. Thus decided to document these in simple terms.
